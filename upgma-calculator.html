@@ -633,6 +633,8 @@
         let labels = [];
         let allSteps = [];
 
+        let scrollObserver = null
+
         // Fraction class to handle exact arithmetic
         class Fraction {
             constructor(numerator, denominator = 1) {
@@ -1121,20 +1123,24 @@
                     behavior: 'smooth',
                     block: 'start'
                 });
-
-                // Update active button
-                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-                const navBtn = document.getElementById(`nav-btn-${stepIndex}`);
-                if (navBtn) {
-                    navBtn.classList.add('active');
-                }
             }
         }
 
         function runUPGMA() {
-            const originalDistances = getDistanceMatrix();
+            // 💡 1. Input Validation
+            for (let i = 0; i < matrixSize; i++) {
+                for (let j = i + 1; j < matrixSize; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (!cell.value) {
+                        alert('Please fill all distance values in the matrix before starting the analysis.');
+                        return; // Stop the function
+                    }
+                }
+            }
+            // Properly clean up any previous observers
+            clearResults();
 
-            // Convert to fractions for exact arithmetic
+            const originalDistances = getDistanceMatrix();
             const exactDistances = {};
             for (const [key, value] of Object.entries(originalDistances)) {
                 exactDistances[key] = new Fraction(value);
@@ -1146,7 +1152,6 @@
             let mergeHistory = [];
             allSteps = [];
 
-            // Initialize clusters
             for (const label of labels) {
                 clusters[label] = {
                     members: [label],
@@ -1156,9 +1161,8 @@
                 };
             }
 
-            // Generate all steps
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
+            const totalMergeSteps = matrixSize - 1;
 
             // Initial step
             const initialTree = createTreeVisualization(clusters, 0, [0]);
@@ -1170,10 +1174,7 @@
                 <div class="step-content">
                     <div class="tree-section">
                         <div class="tree-container">
-                            <h4>🌱 Individual Sequences (Separate Trees)</h4>
-                            <div class="intermediate-tree">
-                                Each sequence starts as its own tree component
-                            </div>
+                            <h4>🌱 Individual Sequences</h4>
                             ${initialTree.outerHTML}
                         </div>
                     </div>
@@ -1190,7 +1191,6 @@
             let stepNumber = 1;
 
             while (activeLabels.length > 1) {
-                // Find minimum distance
                 let minDist = null;
                 let minPair = null;
 
@@ -1204,12 +1204,9 @@
                 const [cluster1, cluster2] = minPair;
                 const newClusterId = `(${cluster1},${cluster2})`;
                 const newHeight = minDist.divide(2);
-
-                // Calculate branch lengths
                 const branch1Length = newHeight.subtract(clusters[cluster1].height);
                 const branch2Length = newHeight.subtract(clusters[cluster2].height);
 
-                // Create new cluster
                 clusters[newClusterId] = {
                     members: [...clusters[cluster1].members, ...clusters[cluster2].members],
                     height: newHeight,
@@ -1219,43 +1216,28 @@
                     ],
                     originalLabel: newClusterId
                 };
-
                 const currentMerge = {
-                    step: stepNumber,
-                    cluster1,
-                    cluster2,
-                    distance: minDist,
-                    height: newHeight,
-                    newId: newClusterId,
-                    branch1Length,
-                    branch2Length
+                    step: stepNumber, cluster1, cluster2, distance: minDist,
+                    height: newHeight, newId: newClusterId, branch1Length, branch2Length
                 };
-
                 mergeHistory.push(currentMerge);
 
-                // Update distances
                 const newDistances = {};
                 const newCalculations = {};
-
                 for (const [key, dist] of Object.entries(distances)) {
                     const [c1, c2] = key.split('|||');
                     if (c1 !== cluster1 && c1 !== cluster2 && c2 !== cluster1 && c2 !== cluster2) {
                         newDistances[key] = dist;
                     }
                 }
-
-                // Calculate new distances
                 let calculationDetails = [];
-
                 for (const otherLabel of activeLabels) {
                     if (otherLabel !== cluster1 && otherLabel !== cluster2) {
                         const members1 = clusters[newClusterId].members;
                         const members2 = clusters[otherLabel].members;
-
                         let totalDist = new Fraction(0);
                         let individualDistances = [];
                         let detailedSteps = [];
-
                         for (const member1 of members1) {
                             for (const member2 of members2) {
                                 const key1 = `${member1}|||${member2}`;
@@ -1266,10 +1248,8 @@
                                 detailedSteps.push(`d(${member1},${member2}) = ${dist.toString()}`);
                             }
                         }
-
                         const count = members1.length * members2.length;
                         const avgDist = totalDist.divide(count);
-
                         const detailedCalc = `
                             <div class="calculation-detail">
                                 <strong>📐 For d(${newClusterId}, ${otherLabel}):</strong><br>
@@ -1277,31 +1257,23 @@
                                 <strong>Sum:</strong> ${individualDistances.join(' + ')} = <span class="fraction">${totalDist.toString()}</span><br>
                                 <strong>Count:</strong> ${members1.length} × ${members2.length} = ${count}<br>
                                 <strong>Average:</strong> <span class="fraction">${totalDist.toString()}</span> ÷ ${count} = <span class="fraction">${avgDist.toString()}</span> = ${avgDist.toDecimal().toFixed(3)}
-                            </div>
-                        `;
-
+                            </div>`;
                         calculationDetails.push(detailedCalc);
-
                         const sortedPair = [newClusterId, otherLabel].sort();
                         const newKey = `${sortedPair[0]}|||${sortedPair[1]}`;
                         newDistances[newKey] = avgDist;
                         newCalculations[newKey] = true;
                     }
                 }
-
                 distances = newDistances;
                 activeLabels = activeLabels.filter(l => l !== cluster1 && l !== cluster2);
                 activeLabels.push(newClusterId);
                 activeLabels.sort();
 
-                // Calculate the maximum height for the current tree state
                 const currentMaxHeight = Math.max(...Object.values(clusters).map(c => c.height.toDecimal()));
-                // Collect all unique node heights present in the current tree
                 const allNodeHeights = [...new Set(Object.values(clusters).map(c => c.height.toDecimal()))];
-                // Pass all collected heights to the visualization function
                 const currentTree = createTreeVisualization(clusters, currentMaxHeight, allNodeHeights, currentMerge, stepNumber);
 
-                // Create step
                 const stepDiv = document.createElement('div');
                 stepDiv.className = 'step';
                 stepDiv.id = `step-${stepNumber}`;
@@ -1314,12 +1286,11 @@
                                 <h4>🔢 New Distance Calculations (UPGMA Formula)</h4>
                                 ${calculationDetails.join('')}
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 stepDiv.innerHTML = `
-                    <h3>🔄 Step ${stepNumber}: Merge <span class="cluster-name">${cluster1}</span> and <span class="cluster-name">${cluster2}</span></h3>
+                    <h3>🔄 Step ${stepNumber} of ${totalMergeSteps}: Merge <span class="cluster-name">${cluster1}</span> and <span class="cluster-name">${cluster2}</span></h3>
                     <div class="merge-info">
                         <strong>🎯 Minimum Distance Found:</strong> <span class="fraction">${minDist.toString()}</span> = ${minDist.toDecimal().toFixed(3)}<br>
                         <strong>📏 New Cluster Height:</strong> <span class="fraction">${minDist.toString()}/2</span> = <span class="fraction">${newHeight.toString()}</span> = ${newHeight.toDecimal().toFixed(3)}<br>
@@ -1327,7 +1298,6 @@
                         • <span class="cluster-name">${cluster1}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster1].height.toString()}</span> = <span class="fraction">${branch1Length.toString()}</span> = ${branch1Length.toDecimal().toFixed(3)}<br>
                         • <span class="cluster-name">${cluster2}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster2].height.toString()}</span> = <span class="fraction">${branch2Length.toString()}</span> = ${branch2Length.toDecimal().toFixed(3)}
                     </div>
-                    
                     <div class="step-content">
                         <div class="tree-section">
                             <div class="tree-container">
@@ -1344,7 +1314,6 @@
                     </div>
                     ${calculationHtml}
                 `;
-
                 resultsDiv.appendChild(stepDiv);
                 stepNumber++;
             }
@@ -1354,7 +1323,6 @@
             const finalMaxHeight = clusters[rootId].height.toDecimal();
             const allFinalHeights = [...new Set(Object.values(clusters).map(c => c.height.toDecimal()))];
             const newick = buildNewick(rootId, clusters);
-            // Pass all final heights to the visualization
             const finalTree = createTreeVisualization(clusters, finalMaxHeight, allFinalHeights);
 
             let mergeSummaryHtml = '<div class="merge-summary">';
@@ -1363,8 +1331,7 @@
                     <div class="merge-item">
                         <strong>Step ${merge.step}:</strong> ${merge.cluster1} + ${merge.cluster2}<br>
                         <small>Distance: <span class="fraction">${merge.distance.toString()}</span> → Height: <span class="fraction">${merge.height.toString()}</span></small>
-                    </div>
-                `;
+                    </div>`;
             }
             mergeSummaryHtml += '</div>';
 
@@ -1377,36 +1344,39 @@
                     <div class="tree-section">
                         <div class="tree-container">
                             <h4>🌳 Final Phylogenetic Tree</h4>
-                            <div class="intermediate-tree">
-                                <strong>✅ Complete UPGMA analysis</strong><br>
-                                All sequences successfully clustered into single tree
-                            </div>
                             ${finalTree.outerHTML}
                         </div>
                     </div>
                     <div class="matrix-section">
                         <div class="final-tree">
-                            <strong>🧬 Newick Format (Standard Phylogenetic Notation):</strong><br>
+                            <strong>🧬 Newick Format:</strong><br>
                             <code>${newick};</code>
                         </div>
-                        <h4>📝 Complete Merge History (Exam Format):</h4>
-                        <ul style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <h4>📝 Complete Merge History:</h4>
+                        <ul style="list-style-type: none; padding-left: 0;">
                             ${mergeHistory.map(merge => `
-                                <li><strong>Step ${merge.step}:</strong> Merged <span class="cluster-name">${merge.cluster1}</span> and <span class="cluster-name">${merge.cluster2}</span><br>
-                                    <strong>Distance:</strong> <span class="fraction">${merge.distance.toString()}</span> = ${merge.distance.toDecimal().toFixed(3)} → <strong>Height:</strong> <span class="fraction">${merge.height.toString()}</span> = ${merge.height.toDecimal().toFixed(3)}<br>
-                                    <strong>Branch lengths:</strong> ${merge.cluster1} = <span class="fraction">${merge.branch1Length.toString()}</span>, ${merge.cluster2} = <span class="fraction">${merge.branch2Length.toString()}</span>
-                                </li><br>
-                            `).join('')}
+                                <li style="margin-bottom: 1em;"><strong>Step ${merge.step}:</strong> Merged <span class="cluster-name">${merge.cluster1}</span> and <span class="cluster-name">${merge.cluster2}</span><br>
+                                    <small><strong>Distance:</strong> <span class="fraction">${merge.distance.toString()}</span> → <strong>Height:</strong> <span class="fraction">${merge.height.toString()}</span></small>
+                                </li>`).join('')}
                         </ul>
-                        ${mergeSummaryHtml}
                     </div>
-                </div>
-            `;
+                </div>`;
             resultsDiv.appendChild(finalStepDiv);
 
+            const completion = document.createElement('div');
+            completion.className = 'completion-message';
+            completion.innerHTML = '🎉 UPGMA Analysis Complete! Make sure to check these answers, I haven\'t thoroughly tested this tool yet, errors might appear... :p\nSo please let me know so I can fix bugs for myself too lol';
+            resultsDiv.appendChild(completion);
 
-            // Setup sticky navigation
             setupStickyNavigation(stepNumber);
+
+            // Smooth scroll to the top of the results.
+            setTimeout(() => {
+                document.getElementById('step-0').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
         }
 
         function setupStickyNavigation(totalSteps) {
@@ -1429,18 +1399,30 @@
                 btn.onclick = () => scrollToStep(i);
                 navDiv.appendChild(btn);
             }
-
-            // Show sticky nav
             stickyNav.classList.add('visible');
 
-            // Set first button as active
-            const firstBtn = document.getElementById('nav-btn-0');
-            if (firstBtn) {
-                firstBtn.classList.add('active');
-            }
+            const options = {
+                root: null, // relative to document viewport
+                rootMargin: '-40% 0px -60% 0px', // trigger when step is in the middle 40% of the screen
+                threshold: 0
+            };
 
-            // Setup scroll-triggered sticky behavior
-            setupScrollTriggeredSticky(stickyNav);
+            scrollObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const stepId = entry.target.id;
+                        const stepIndex = stepId.split('-')[1];
+                        document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                        const navBtn = document.getElementById(`nav-btn-${stepIndex}`);
+                        if (navBtn) {
+                            navBtn.classList.add('active');
+                        }
+                    }
+                });
+            }, options);
+
+            const steps = document.querySelectorAll('.step');
+            steps.forEach(step => scrollObserver.observe(step));
         }
 
         function setupScrollTriggeredSticky(stickyNav) {
@@ -1483,14 +1465,14 @@
         }
 
         function clearResults() {
+            // Disconnect the observer when clearing results
+            if (scrollObserver) {
+                scrollObserver.disconnect();
+                scrollObserver = null;
+            }
             document.getElementById('results').innerHTML = '';
             const stickyNav = document.getElementById('stickyNav');
             stickyNav.classList.remove('visible');
-            stickyNav.classList.remove('stuck');
-            allSteps = [];
-
-            // Remove scroll listener if it exists
-            window.removeEventListener('scroll', updateStickyBehavior);
         }
 
         // Initialize
