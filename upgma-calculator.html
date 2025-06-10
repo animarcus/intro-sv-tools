@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPGMA Calculator - Step by Step</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1900px;
+            min-width: 320px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #007bff;
+        }
+
+        .matrix-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .matrix-input {
+            display: grid;
+            gap: 3px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .matrix-cell {
+            width: 70px;
+            height: 45px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-cell:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .matrix-cell:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .matrix-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            font-weight: bold;
+        }
+
+        .matrix-diagonal {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            min-height: 44px;
+            /* Better touch target */
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Native CSS sticky navigation */
+        .sticky-nav {
+            position: sticky;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 123, 255, 0.2);
+            display: none;
+            max-width: 90vw;
+            overflow-x: auto;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        .sticky-nav.visible {
+            display: block;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            margin: 0 8px;
+            font-size: 14px;
+            padding: 10px 16px;
+            border-radius: 20px;
+            min-height: 44px;
+            /* Better touch target */
+            min-width: 60px;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            transform: translateY(-2px);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        }
+
+        .step-indicator {
+            font-size: 1em;
+            color: #495057;
+            margin: 0 10px 10px 10px;
+            font-weight: bold;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .step {
+            background: white;
+            border: 4px solid #007bff;
+            border-radius: 15px;
+            padding: 35px;
+            margin: 60px 0;
+            box-shadow: 0 15px 40px rgba(0, 123, 255, 0.2);
+            scroll-margin-top: 120px;
+            /* Account for fixed nav */
+            position: relative;
+        }
+
+        .step h3 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 1.8em;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            margin: -35px -35px 10px -35px;
+            padding: 20px 35px 15px 35px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .step-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            margin-bottom: 25px;
+        }
+
+        .tree-section {
+            order: 1;
+        }
+
+        .matrix-section {
+            order: 2;
+        }
+
+        .calculations-section {
+            grid-column: 1 / -1;
+            order: 3;
+        }
+
+        .matrix-display {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            overflow-x: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            min-width: 300px;
+        }
+
+        .matrix-display h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+
+        .matrix-display table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            min-width: 300px;
+        }
+
+        .matrix-display th,
+        .matrix-display td {
+            border: 2px solid #ccc;
+            padding: 12px 16px;
+            text-align: center;
+            min-width: 90px;
+            position: relative;
+            font-weight: bold;
+        }
+
+        .matrix-display th {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Highlight upper triangle of symmetric matrix */
+        .matrix-display .upper-triangle {
+            background: rgba(0, 123, 255, 0.08);
+            border: 2px solid #007bff;
+        }
+
+        .calculated-cell {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb) !important;
+            border: 3px solid #28a745 !important;
+            animation: highlight 1s ease-in-out;
+            position: relative;
+        }
+
+        .calculated-cell::after {
+            content: '✨';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 12px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes highlight {
+            0% {
+                background: #fff3cd;
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
+            }
+
+            100% {
+                background: linear-gradient(135deg, #d4edda, #c3e6cb);
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(255, 193, 7, 0);
+            }
+        }
+
+        @keyframes sparkle {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .merge-info {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            color: #856404;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            line-height: 1.6;
+        }
+
+        .calculation-detail {
+            background: linear-gradient(135deg, #e7f3ff, #cce7ff);
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            box-shadow: 0 3px 10px rgba(0, 123, 255, 0.1);
+        }
+
+        .final-tree {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.2);
+        }
+
+        .size-selector {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .size-selector label {
+            margin-right: 15px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .size-selector select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: white;
+            transition: all 0.2s ease;
+            min-height: 44px;
+            /* Better touch target */
+        }
+
+        .size-selector select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .cluster-name {
+            color: #e74c3c;
+            font-weight: bold;
+            background: #fdeaea;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #f5c6cb;
+            margin: 0 1px;
+            display: inline-block;
+        }
+
+        .fraction {
+            color: #8e44ad;
+            font-weight: bold;
+            background: #f4f0ff;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #d1ecf1;
+            margin: 0 1px;
+            display: inline-block;
+        }
+
+        .new-calculations {
+            background: linear-gradient(135deg, #fff9e6, #fef7e0);
+            border: 3px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.2);
+            overflow-x: auto;
+        }
+
+        .new-calculations h4 {
+            color: #b8860b;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .tree-container {
+            background: linear-gradient(135deg, #f8f4ff, #f0e6ff);
+            border: 2px solid #9b59b6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.2);
+            overflow-x: auto;
+            min-width: 300px;
+        }
+
+        .tree-container h4 {
+            color: #9b59b6;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #d8bfd8;
+        }
+
+        .intermediate-tree {
+            background: rgba(248, 244, 255, 0.8);
+            border: 1px solid #d8bfd8;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 12px 0;
+            font-size: 0.9em;
+            color: #6f42c1;
+            font-weight: bold;
+        }
+
+        .tree-svg {
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+        }
+
+        .current-merge {
+            stroke: #e74c3c;
+            stroke-width: 5;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 5px rgba(231, 76, 60, 0.5));
+        }
+
+        @keyframes pulse {
+            from {
+                stroke-width: 5;
+                opacity: 0.8;
+            }
+
+            to {
+                stroke-width: 7;
+                opacity: 1;
+            }
+        }
+
+        .previous-merge {
+            stroke: #2c3e50;
+            stroke-width: 3;
+        }
+
+        .leaf-node {
+            fill: #2c3e50;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .internal-node {
+            fill: #e74c3c;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .branch-label {
+            fill: #8e44ad;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .merge-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .merge-item {
+            background: white;
+            border: 2px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .merge-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .completion-message {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 3px solid #28a745;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: center;
+            color: #155724;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
+        }
+
+        /* === Responsive Layout for Tablets and Mobile === */
+        @media (max-width: 1300px) {
+
+            /* 1. Stack the main content areas */
+            .step-content {
+                grid-template-columns: 1fr;
+                /* Switch from 2 columns to 1 */
+                gap: 25px;
+            }
+
+            /* 2. Constrain the SVG in the stacked view and center it */
+            .tree-svg {
+                max-width: 500px;
+                /* Prevent it from being too wide */
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            /* 3. Adjust spacing for smaller viewports */
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .step {
+                padding: 20px;
+                margin: 30px 0;
+            }
+
+            .step h3 {
+                font-size: 1.5em;
+                margin: -20px -20px 10px -20px;
+                padding: 15px 20px;
+            }
+
+            button {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            /* 4. Make matrix table cells smaller */
+            .matrix-display th,
+            .matrix-display td {
+                padding: 8px 10px;
+                min-width: 60px;
+                font-size: 12px;
+            }
+
+            .matrix-cell {
+                width: 50px;
+                height: 40px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧬 UPGMA Calculator</h1>
+
+        <div class="input-section">
+            <h2>📊 Distance Matrix Input</h2>
+            <div class="size-selector">
+                <label for="matrixSize">Matrix Size:</label>
+                <select id="matrixSize" onchange="createMatrix()">
+                    <option value="3">3×3</option>
+                    <option value="4">4×4</option>
+                    <option value="5" selected>5×5</option>
+                    <option value="6">6×6</option>
+                    <option value="7">7×7</option>
+                </select>
+            </div>
+
+            <div class="matrix-container">
+                <div id="matrixInput"></div>
+            </div>
+
+            <p><strong>💡 Pro Tip:</strong> Only fill the upper triangle - the matrix will be automatically mirrored!
+                Perfect for manual distance counting from sequences.</p>
+        </div>
+
+        <div class="controls">
+            <button onclick="fillExample()">📝 Fill Example Data</button>
+            <button onclick="runUPGMA()">🚀 Start UPGMA Analysis</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+
+        <!-- Navigation bar back in document flow -->
+        <div id="stickyNav" class="sticky-nav">
+            <div class="step-indicator">Navigate Steps:</div>
+            <div id="navButtons"></div>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        let matrixSize = 5;
+        let labels = [];
+        let allSteps = [];
+
+        // Fraction class to handle exact arithmetic
+        class Fraction {
+            constructor(numerator, denominator = 1) {
+                if (denominator === 0) throw new Error("Denominator cannot be zero");
+
+                // Handle negative fractions
+                if (denominator < 0) {
+                    numerator = -numerator;
+                    denominator = -denominator;
+                }
+
+                // Simplify fraction
+                const gcd = this.gcd(Math.abs(numerator), Math.abs(denominator));
+                this.num = numerator / gcd;
+                this.den = denominator / gcd;
+            }
+
+            gcd(a, b) {
+                return b === 0 ? a : this.gcd(b, a % b);
+            }
+
+            add(other) {
+                if (typeof other === 'number') other = new Fraction(other);
+                return new Fraction(
+                    this.num * other.den + other.num * this.den,
+                    this.den * other.den
+                );
+            }
+
+            divide(other) {
+                if (typeof other === 'number') other = new Fraction(other);
+                return new Fraction(
+                    this.num * other.den,
+                    this.den * other.num
+                );
+            }
+
+            subtract(other) {
+                if (typeof other === 'number') other = new Fraction(other);
+                return new Fraction(
+                    this.num * other.den - other.num * this.den,
+                    this.den * other.den
+                );
+            }
+
+            toDecimal() {
+                return this.num / this.den;
+            }
+
+            toString() {
+                if (this.den === 1) return this.num.toString();
+                return `${this.num}/${this.den}`;
+            }
+
+            toMixedString() {
+                if (this.den === 1) return this.num.toString();
+
+                const decimal = this.toDecimal();
+                if (Number.isInteger(decimal)) return decimal.toString();
+
+                // Show as decimal if it's cleaner
+                if (this.den <= 10 || decimal.toString().length <= 4) {
+                    return decimal.toString();
+                }
+
+                return `${this.num}/${this.den}`;
+            }
+        }
+
+        function createMatrix() {
+            matrixSize = parseInt(document.getElementById('matrixSize').value);
+            labels = Array.from({ length: matrixSize }, (_, i) => String(i + 1));
+
+            const container = document.getElementById('matrixInput');
+            container.innerHTML = '';
+
+            const matrix = document.createElement('div');
+            matrix.className = 'matrix-input';
+            matrix.style.gridTemplateColumns = `repeat(${matrixSize + 1}, 1fr)`;
+
+            // Header row
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'matrix-cell matrix-header';
+            emptyCell.textContent = '';
+            matrix.appendChild(emptyCell);
+
+            for (let j = 0; j < matrixSize; j++) {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'matrix-cell matrix-header';
+                headerCell.textContent = labels[j];
+                matrix.appendChild(headerCell);
+            }
+
+            // Data rows
+            for (let i = 0; i < matrixSize; i++) {
+                // Row header
+                const rowHeader = document.createElement('div');
+                rowHeader.className = 'matrix-cell matrix-header';
+                rowHeader.textContent = labels[i];
+                matrix.appendChild(rowHeader);
+
+                // Data cells
+                for (let j = 0; j < matrixSize; j++) {
+                    const cell = document.createElement('input');
+                    cell.className = 'matrix-cell';
+                    cell.type = 'number';
+                    cell.min = '0';
+                    cell.step = '0.1';
+                    cell.id = `cell-${i}-${j}`;
+
+                    if (i === j) {
+                        cell.value = '0';
+                        cell.disabled = true;
+                        cell.classList.add('matrix-diagonal');
+                    } else if (i > j) {
+                        cell.disabled = true;
+                        cell.classList.add('matrix-diagonal');
+                        cell.placeholder = 'auto';
+                    }
+
+                    if (i < j) {
+                        cell.addEventListener('input', updateSymmetric);
+                    }
+
+                    matrix.appendChild(cell);
+                }
+            }
+
+            container.appendChild(matrix);
+        }
+
+        function updateSymmetric(event) {
+            const [, i, j] = event.target.id.match(/cell-(\d+)-(\d+)/);
+            const symmetricCell = document.getElementById(`cell-${j}-${i}`);
+            if (symmetricCell) {
+                symmetricCell.value = event.target.value;
+            }
+        }
+
+        function fillExample() {
+            const exampleData = [
+                [0, 2, 8, 6, 7],
+                [2, 0, 6, 4, 5],
+                [8, 6, 0, 4, 3],
+                [6, 4, 4, 0, 5],
+                [7, 5, 3, 5, 0]
+            ];
+
+            document.getElementById('matrixSize').value = '5';
+            createMatrix();
+
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (cell && !cell.disabled) {
+                        cell.value = exampleData[i][j];
+                    }
+                }
+            }
+        }
+
+        function getDistanceMatrix() {
+            const matrix = {};
+            for (let i = 0; i < matrixSize; i++) {
+                for (let j = i + 1; j < matrixSize; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    const value = parseFloat(cell.value) || 0;
+                    matrix[`${labels[i]}|||${labels[j]}`] = value;
+                }
+            }
+            return matrix;
+        }
+
+        function formatMatrix(distances, activeLabels, newCalculations = null) {
+            let html = '<table>';
+            html += '<tr><th></th>';
+            for (const label of activeLabels) {
+                html += `<th>${label}</th>`;
+            }
+            html += '</tr>';
+
+            for (let i = 0; i < activeLabels.length; i++) {
+                const label1 = activeLabels[i];
+                html += `<tr><th>${label1}</th>`;
+                for (let j = 0; j < activeLabels.length; j++) {
+                    const label2 = activeLabels[j];
+                    if (label1 === label2) {
+                        html += '<td>0</td>';
+                    } else {
+                        const key1 = `${label1}|||${label2}`;
+                        const key2 = `${label2}|||${label1}`;
+                        const distance = distances[key1] || distances[key2] || 0;
+
+                        let displayValue;
+                        if (distance instanceof Fraction) {
+                            displayValue = distance.toMixedString();
+                        } else {
+                            displayValue = Number.isInteger(distance) ? distance.toString() : distance.toFixed(3);
+                        }
+
+                        // Determine cell classes
+                        let cellClasses = [];
+
+                        // Highlight newly calculated cells
+                        if (newCalculations && (newCalculations[key1] || newCalculations[key2])) {
+                            cellClasses.push('calculated-cell');
+                        }
+
+                        // Highlight upper triangle (i < j for upper triangle in symmetric matrix)
+                        if (i < j) {
+                            cellClasses.push('upper-triangle');
+                        }
+
+                        const classAttr = cellClasses.length > 0 ? ` class="${cellClasses.join(' ')}"` : '';
+                        html += `<td${classAttr}>${displayValue}</td>`;
+                    }
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            return html;
+        }
+
+        function createTreeVisualization(clusters, maxHeight, allHeights, currentMerge = null, stepNumber = 0) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+            // Simplified responsive sizing
+            const svgWidth = 500;
+            const svgHeight = 280;
+
+            svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+            svg.classList.add('tree-svg');
+
+            // Add vertical ruler on the right
+            addVerticalRuler(svg, svgHeight, svgWidth, maxHeight, allHeights);
+
+            // Find all current components (separate trees)
+            const components = findTreeComponents(clusters);
+
+            if (components.length === 0) return svg;
+
+            // Calculate layout for all components
+            let currentX = 30;
+            const componentSpacing = (svgWidth - 100) / components.length;
+
+            components.forEach((rootId, index) => {
+                const leaves = getLeafOrder(rootId, clusters);
+                const leafSpacing = Math.min(70, (componentSpacing - 50) / Math.max(1, leaves.length - 1));
+
+                const leafPositions = {};
+                leaves.forEach((leaf, i) => {
+                    leafPositions[leaf] = currentX + i * leafSpacing;
+                });
+
+                const coords = {};
+                assignCoordinates(rootId, clusters, leafPositions, coords, svgHeight, maxHeight);
+
+                drawTreeComponent(svg, rootId, clusters, coords, currentMerge);
+
+                currentX += componentSpacing;
+            });
+
+            return svg;
+        }
+
+        function addVerticalRuler(svg, svgHeight, svgWidth, maxHeight, allHeights) {
+            // Create ruler line more to the left for better visibility
+            const rulerX = svgWidth * 0.9; // 75% from left instead of far right
+            const rulerLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            rulerLine.setAttribute('x1', rulerX);
+            rulerLine.setAttribute('y1', '20');
+            rulerLine.setAttribute('x2', rulerX);
+            rulerLine.setAttribute('y2', svgHeight - 30);
+            rulerLine.setAttribute('stroke', '#666');
+            rulerLine.setAttribute('stroke-width', '1');
+            svg.appendChild(rulerLine);
+
+            const drawingHeight = svgHeight - 50; // Consistent with assignCoordinates
+            const scaleFactor = (maxHeight > 0) ? drawingHeight / maxHeight : 0;
+            const topValue = Math.ceil(maxHeight);
+
+            // Use a Set to automatically handle unique values for the ticks.
+            const ticksToDraw = new Set();
+
+            // 1. Add the specific milestone heights from the tree's nodes.
+            allHeights.forEach(h => ticksToDraw.add(h));
+
+            // 2. Add regular, evenly-spaced ticks for a consistent scale.
+            const regularTickCount = (topValue < 1) ? 1 : Math.min(5, topValue);
+            for (let i = 0; i <= regularTickCount; i++) {
+                if (topValue === 0 && i > 0) continue;
+                ticksToDraw.add((topValue / regularTickCount) * i);
+            }
+
+            // Convert the Set to a sorted array to draw them in order.
+            const sortedTicks = [...ticksToDraw].sort((a, b) => a - b);
+
+            sortedTicks.forEach(distance => {
+                // Prevent drawing ticks slightly above the intended max due to floating point math
+                if (distance > topValue + 0.001 && topValue !== 0) return;
+
+                const y = (svgHeight - 30) - (distance * scaleFactor);
+                if (isNaN(y)) return; // Safeguard
+
+                // Draw the tick mark
+                const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                tick.setAttribute('x1', rulerX - 5);
+                tick.setAttribute('y1', y);
+                tick.setAttribute('x2', rulerX + 5);
+                tick.setAttribute('y2', y);
+                tick.setAttribute('stroke', '#666');
+                tick.setAttribute('stroke-width', '1');
+                // Make milestone ticks slightly bolder
+                if (allHeights.includes(distance)) {
+                    tick.setAttribute('stroke-width', '1.5');
+                    tick.setAttribute('stroke', '#333');
+                }
+                svg.appendChild(tick);
+
+                // Draw the label for the tick mark
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', rulerX + 8);
+                label.setAttribute('y', y + 3);
+                label.setAttribute('text-anchor', 'start');
+                label.setAttribute('font-size', '10');
+                label.setAttribute('fill', '#666');
+                // Make milestone labels bolder
+                if (allHeights.includes(distance)) {
+                    label.setAttribute('font-weight', 'bold');
+                    label.setAttribute('fill', '#000');
+                }
+                label.textContent = distance.toFixed(2); // Use 2 decimal places for precision
+                svg.appendChild(label);
+            });
+
+            // Add ruler label
+            const rulerLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            rulerLabel.setAttribute('x', rulerX - 20);
+            rulerLabel.setAttribute('y', '10');
+            rulerLabel.setAttribute('font-size', '9');
+            rulerLabel.setAttribute('fill', '#666');
+            rulerLabel.setAttribute('font-weight', 'bold');
+            rulerLabel.textContent = 'Distance';
+            svg.appendChild(rulerLabel);
+        }
+
+        function findTreeComponents(clusters) {
+            const processed = new Set();
+            const components = [];
+
+            // Find root nodes (nodes that are not children of other nodes)
+            const allNodes = new Set(Object.keys(clusters));
+            const childNodes = new Set();
+
+            for (const cluster of Object.values(clusters)) {
+                for (const child of cluster.children) {
+                    childNodes.add(child.id);
+                }
+            }
+
+            const rootNodes = [...allNodes].filter(node => !childNodes.has(node));
+
+            return rootNodes;
+        }
+
+        function getLeafOrder(clusterId, clusters) {
+            const cluster = clusters[clusterId];
+            if (cluster.children.length === 0) {
+                return [clusterId];
+            }
+
+            let leaves = [];
+            for (const child of cluster.children) {
+                leaves = leaves.concat(getLeafOrder(child.id, clusters));
+            }
+            return leaves;
+        }
+
+        function assignCoordinates(clusterId, clusters, leafPositions, coords, svgHeight = 280, maxHeight = 1) {
+            const cluster = clusters[clusterId];
+
+            if (cluster.children.length === 0) {
+                coords[clusterId] = {
+                    x: leafPositions[clusterId],
+                    y: svgHeight - 30
+                };
+                return coords[clusterId];
+            }
+
+            // Recursively get coordinates for children first
+            const childCoords = cluster.children.map(child =>
+                assignCoordinates(child.id, clusters, leafPositions, coords, svgHeight, maxHeight)
+            );
+
+            // The available drawing height for the tree
+            const drawingHeight = svgHeight - 50; // (svgHeight - top_margin - bottom_margin)
+
+            // Create a dynamic scaling factor. Handle maxHeight=0 case to avoid division by zero.
+            const scaleFactor = (maxHeight > 0) ? drawingHeight / maxHeight : 0;
+
+            // Calculate y-position based on the cluster's height and the dynamic scale
+            // Height 0 will be at the bottom (svgHeight - 30)
+            const y = (svgHeight - 30) - (cluster.height.toDecimal() * scaleFactor);
+
+            // Calculate x-position as the average of its children
+            const x = childCoords.reduce((sum, coord) => sum + coord.x, 0) / childCoords.length;
+
+            coords[clusterId] = { x, y };
+            return coords[clusterId];
+        }
+
+        function drawTreeComponent(svg, clusterId, clusters, coords, currentMerge) {
+            const cluster = clusters[clusterId];
+
+            if (cluster.children.length > 0) {
+                const parentCoord = coords[clusterId];
+
+                // Determine if this is the current merge
+                const isCurrentMerge = currentMerge &&
+                    ((cluster.children[0].id === currentMerge.cluster1 && cluster.children[1].id === currentMerge.cluster2) ||
+                        (cluster.children[0].id === currentMerge.cluster2 && cluster.children[1].id === currentMerge.cluster1));
+
+                for (const child of cluster.children) {
+                    const childCoord = coords[child.id];
+
+                    // Vertical line
+                    const vertLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    vertLine.setAttribute('x1', childCoord.x);
+                    vertLine.setAttribute('y1', childCoord.y);
+                    vertLine.setAttribute('x2', childCoord.x);
+                    vertLine.setAttribute('y2', parentCoord.y);
+                    vertLine.setAttribute('class', isCurrentMerge ? 'current-merge' : 'previous-merge');
+                    svg.appendChild(vertLine);
+
+                    // Branch length label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', childCoord.x + 5);
+                    label.setAttribute('y', (childCoord.y + parentCoord.y) / 2);
+                    label.setAttribute('class', 'branch-label');
+                    label.textContent = child.branchLength.toMixedString();
+                    svg.appendChild(label);
+
+                    drawTreeComponent(svg, child.id, clusters, coords, currentMerge);
+                }
+
+                // Horizontal line connecting children
+                const childXs = cluster.children.map(child => coords[child.id].x);
+                const horizLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                horizLine.setAttribute('x1', Math.min(...childXs));
+                horizLine.setAttribute('y1', parentCoord.y);
+                horizLine.setAttribute('x2', Math.max(...childXs));
+                horizLine.setAttribute('y2', parentCoord.y);
+                horizLine.setAttribute('class', isCurrentMerge ? 'current-merge' : 'previous-merge');
+                svg.appendChild(horizLine);
+
+                // Internal node label
+                if (clusterId.includes(',')) {
+                    const nodeLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    nodeLabel.setAttribute('x', parentCoord.x);
+                    nodeLabel.setAttribute('y', parentCoord.y - 8);
+                    nodeLabel.setAttribute('text-anchor', 'middle');
+                    nodeLabel.setAttribute('class', 'internal-node');
+                    nodeLabel.setAttribute('font-size', '9');
+                    nodeLabel.textContent = clusterId;
+                    svg.appendChild(nodeLabel);
+                }
+
+            } else {
+                // Leaf label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const coord = coords[clusterId];
+                label.setAttribute('x', coord.x);
+                label.setAttribute('y', coord.y + 15);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'leaf-node');
+                label.setAttribute('font-size', '13');
+                label.textContent = clusterId;
+                svg.appendChild(label);
+            }
+        }
+
+        function scrollToStep(stepIndex) {
+            const stepElement = document.getElementById(`step-${stepIndex}`);
+            if (stepElement) {
+                stepElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+
+                // Update active button
+                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                const navBtn = document.getElementById(`nav-btn-${stepIndex}`);
+                if (navBtn) {
+                    navBtn.classList.add('active');
+                }
+            }
+        }
+
+        function runUPGMA() {
+            const originalDistances = getDistanceMatrix();
+
+            // Convert to fractions for exact arithmetic
+            const exactDistances = {};
+            for (const [key, value] of Object.entries(originalDistances)) {
+                exactDistances[key] = new Fraction(value);
+            }
+
+            let distances = { ...exactDistances };
+            let activeLabels = [...labels];
+            let clusters = {};
+            let mergeHistory = [];
+            allSteps = [];
+
+            // Initialize clusters
+            for (const label of labels) {
+                clusters[label] = {
+                    members: [label],
+                    height: new Fraction(0),
+                    children: [],
+                    originalLabel: label
+                };
+            }
+
+            // Generate all steps
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            // Initial step
+            const initialTree = createTreeVisualization(clusters, 0, [0]);
+            const initialStepDiv = document.createElement('div');
+            initialStepDiv.className = 'step';
+            initialStepDiv.id = 'step-0';
+            initialStepDiv.innerHTML = `
+                <h3>📋 Initial State</h3>
+                <div class="step-content">
+                    <div class="tree-section">
+                        <div class="tree-container">
+                            <h4>🌱 Individual Sequences (Separate Trees)</h4>
+                            <div class="intermediate-tree">
+                                Each sequence starts as its own tree component
+                            </div>
+                            ${initialTree.outerHTML}
+                        </div>
+                    </div>
+                    <div class="matrix-section">
+                        <div class="matrix-display">
+                            <h4>🔢 Initial Distance Matrix</h4>
+                            ${formatMatrix(distances, activeLabels)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsDiv.appendChild(initialStepDiv);
+
+            let stepNumber = 1;
+
+            while (activeLabels.length > 1) {
+                // Find minimum distance
+                let minDist = null;
+                let minPair = null;
+
+                for (const [key, dist] of Object.entries(distances)) {
+                    if (minDist === null || dist.toDecimal() < minDist.toDecimal()) {
+                        minDist = dist;
+                        minPair = key.split('|||');
+                    }
+                }
+
+                const [cluster1, cluster2] = minPair;
+                const newClusterId = `(${cluster1},${cluster2})`;
+                const newHeight = minDist.divide(2);
+
+                // Calculate branch lengths
+                const branch1Length = newHeight.subtract(clusters[cluster1].height);
+                const branch2Length = newHeight.subtract(clusters[cluster2].height);
+
+                // Create new cluster
+                clusters[newClusterId] = {
+                    members: [...clusters[cluster1].members, ...clusters[cluster2].members],
+                    height: newHeight,
+                    children: [
+                        { id: cluster1, branchLength: branch1Length },
+                        { id: cluster2, branchLength: branch2Length }
+                    ],
+                    originalLabel: newClusterId
+                };
+
+                const currentMerge = {
+                    step: stepNumber,
+                    cluster1,
+                    cluster2,
+                    distance: minDist,
+                    height: newHeight,
+                    newId: newClusterId,
+                    branch1Length,
+                    branch2Length
+                };
+
+                mergeHistory.push(currentMerge);
+
+                // Update distances
+                const newDistances = {};
+                const newCalculations = {};
+
+                for (const [key, dist] of Object.entries(distances)) {
+                    const [c1, c2] = key.split('|||');
+                    if (c1 !== cluster1 && c1 !== cluster2 && c2 !== cluster1 && c2 !== cluster2) {
+                        newDistances[key] = dist;
+                    }
+                }
+
+                // Calculate new distances
+                let calculationDetails = [];
+
+                for (const otherLabel of activeLabels) {
+                    if (otherLabel !== cluster1 && otherLabel !== cluster2) {
+                        const members1 = clusters[newClusterId].members;
+                        const members2 = clusters[otherLabel].members;
+
+                        let totalDist = new Fraction(0);
+                        let individualDistances = [];
+                        let detailedSteps = [];
+
+                        for (const member1 of members1) {
+                            for (const member2 of members2) {
+                                const key1 = `${member1}|||${member2}`;
+                                const key2 = `${member2}|||${member1}`;
+                                const dist = exactDistances[key1] || exactDistances[key2] || new Fraction(0);
+                                totalDist = totalDist.add(dist);
+                                individualDistances.push(`d(${member1},${member2})=${dist.toString()}`);
+                                detailedSteps.push(`d(${member1},${member2}) = ${dist.toString()}`);
+                            }
+                        }
+
+                        const count = members1.length * members2.length;
+                        const avgDist = totalDist.divide(count);
+
+                        const detailedCalc = `
+                            <div class="calculation-detail">
+                                <strong>📐 For d(${newClusterId}, ${otherLabel}):</strong><br>
+                                ${detailedSteps.join('<br>')}<br>
+                                <strong>Sum:</strong> ${individualDistances.join(' + ')} = <span class="fraction">${totalDist.toString()}</span><br>
+                                <strong>Count:</strong> ${members1.length} × ${members2.length} = ${count}<br>
+                                <strong>Average:</strong> <span class="fraction">${totalDist.toString()}</span> ÷ ${count} = <span class="fraction">${avgDist.toString()}</span> = ${avgDist.toDecimal().toFixed(3)}
+                            </div>
+                        `;
+
+                        calculationDetails.push(detailedCalc);
+
+                        const sortedPair = [newClusterId, otherLabel].sort();
+                        const newKey = `${sortedPair[0]}|||${sortedPair[1]}`;
+                        newDistances[newKey] = avgDist;
+                        newCalculations[newKey] = true;
+                    }
+                }
+
+                distances = newDistances;
+                activeLabels = activeLabels.filter(l => l !== cluster1 && l !== cluster2);
+                activeLabels.push(newClusterId);
+                activeLabels.sort();
+
+                // Calculate the maximum height for the current tree state
+                const currentMaxHeight = Math.max(...Object.values(clusters).map(c => c.height.toDecimal()));
+                // Collect all unique node heights present in the current tree
+                const allNodeHeights = [...new Set(Object.values(clusters).map(c => c.height.toDecimal()))];
+                // Pass all collected heights to the visualization function
+                const currentTree = createTreeVisualization(clusters, currentMaxHeight, allNodeHeights, currentMerge, stepNumber);
+
+                // Create step
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'step';
+                stepDiv.id = `step-${stepNumber}`;
+
+                let calculationHtml = '';
+                if (calculationDetails.length > 0) {
+                    calculationHtml = `
+                        <div class="calculations-section">
+                            <div class="new-calculations">
+                                <h4>🔢 New Distance Calculations (UPGMA Formula)</h4>
+                                ${calculationDetails.join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                stepDiv.innerHTML = `
+                    <h3>🔄 Step ${stepNumber}: Merge <span class="cluster-name">${cluster1}</span> and <span class="cluster-name">${cluster2}</span></h3>
+                    <div class="merge-info">
+                        <strong>🎯 Minimum Distance Found:</strong> <span class="fraction">${minDist.toString()}</span> = ${minDist.toDecimal().toFixed(3)}<br>
+                        <strong>📏 New Cluster Height:</strong> <span class="fraction">${minDist.toString()}/2</span> = <span class="fraction">${newHeight.toString()}</span> = ${newHeight.toDecimal().toFixed(3)}<br>
+                        <strong>🌿 Branch Length Calculations:</strong><br>
+                        • <span class="cluster-name">${cluster1}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster1].height.toString()}</span> = <span class="fraction">${branch1Length.toString()}</span> = ${branch1Length.toDecimal().toFixed(3)}<br>
+                        • <span class="cluster-name">${cluster2}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster2].height.toString()}</span> = <span class="fraction">${branch2Length.toString()}</span> = ${branch2Length.toDecimal().toFixed(3)}
+                    </div>
+                    
+                    <div class="step-content">
+                        <div class="tree-section">
+                            <div class="tree-container">
+                                <h4>🌿 Current Tree State</h4>
+                                ${currentTree.outerHTML}
+                            </div>
+                        </div>
+                        <div class="matrix-section">
+                            <div class="matrix-display">
+                                <h4>📊 Updated Distance Matrix</h4>
+                                ${formatMatrix(distances, activeLabels, newCalculations)}
+                            </div>
+                        </div>
+                    </div>
+                    ${calculationHtml}
+                `;
+
+                resultsDiv.appendChild(stepDiv);
+                stepNumber++;
+            }
+
+            // Final step
+            const rootId = activeLabels[0];
+            const finalMaxHeight = clusters[rootId].height.toDecimal();
+            const allFinalHeights = [...new Set(Object.values(clusters).map(c => c.height.toDecimal()))];
+            const newick = buildNewick(rootId, clusters);
+            // Pass all final heights to the visualization
+            const finalTree = createTreeVisualization(clusters, finalMaxHeight, allFinalHeights);
+
+            let mergeSummaryHtml = '<div class="merge-summary">';
+            for (const merge of mergeHistory) {
+                mergeSummaryHtml += `
+                    <div class="merge-item">
+                        <strong>Step ${merge.step}:</strong> ${merge.cluster1} + ${merge.cluster2}<br>
+                        <small>Distance: <span class="fraction">${merge.distance.toString()}</span> → Height: <span class="fraction">${merge.height.toString()}</span></small>
+                    </div>
+                `;
+            }
+            mergeSummaryHtml += '</div>';
+
+            const finalStepDiv = document.createElement('div');
+            finalStepDiv.className = 'step';
+            finalStepDiv.id = `step-${stepNumber}`;
+            finalStepDiv.innerHTML = `
+                <h3>🏆 Complete Phylogenetic Tree</h3>
+                <div class="step-content">
+                    <div class="tree-section">
+                        <div class="tree-container">
+                            <h4>🌳 Final Phylogenetic Tree</h4>
+                            <div class="intermediate-tree">
+                                <strong>✅ Complete UPGMA analysis</strong><br>
+                                All sequences successfully clustered into single tree
+                            </div>
+                            ${finalTree.outerHTML}
+                        </div>
+                    </div>
+                    <div class="matrix-section">
+                        <div class="final-tree">
+                            <strong>🧬 Newick Format (Standard Phylogenetic Notation):</strong><br>
+                            <code>${newick};</code>
+                        </div>
+                        <h4>📝 Complete Merge History (Exam Format):</h4>
+                        <ul style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
+                            ${mergeHistory.map(merge => `
+                                <li><strong>Step ${merge.step}:</strong> Merged <span class="cluster-name">${merge.cluster1}</span> and <span class="cluster-name">${merge.cluster2}</span><br>
+                                    <strong>Distance:</strong> <span class="fraction">${merge.distance.toString()}</span> = ${merge.distance.toDecimal().toFixed(3)} → <strong>Height:</strong> <span class="fraction">${merge.height.toString()}</span> = ${merge.height.toDecimal().toFixed(3)}<br>
+                                    <strong>Branch lengths:</strong> ${merge.cluster1} = <span class="fraction">${merge.branch1Length.toString()}</span>, ${merge.cluster2} = <span class="fraction">${merge.branch2Length.toString()}</span>
+                                </li><br>
+                            `).join('')}
+                        </ul>
+                        ${mergeSummaryHtml}
+                    </div>
+                </div>
+            `;
+            resultsDiv.appendChild(finalStepDiv);
+
+
+            // Setup sticky navigation
+            setupStickyNavigation(stepNumber);
+        }
+
+        function setupStickyNavigation(totalSteps) {
+            const navDiv = document.getElementById('navButtons');
+            const stickyNav = document.getElementById('stickyNav');
+
+            if (!navDiv || !stickyNav) {
+                console.error('Navigation elements not found');
+                return;
+            }
+
+            navDiv.innerHTML = '';
+
+            // Create navigation buttons
+            for (let i = 0; i <= totalSteps; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'nav-button';
+                btn.id = `nav-btn-${i}`;
+                btn.textContent = i === 0 ? 'Initial' : i === totalSteps ? 'Final' : `Step ${i}`;
+                btn.onclick = () => scrollToStep(i);
+                navDiv.appendChild(btn);
+            }
+
+            // Show sticky nav
+            stickyNav.classList.add('visible');
+
+            // Set first button as active
+            const firstBtn = document.getElementById('nav-btn-0');
+            if (firstBtn) {
+                firstBtn.classList.add('active');
+            }
+
+            // Setup scroll-triggered sticky behavior
+            setupScrollTriggeredSticky(stickyNav);
+        }
+
+        function setupScrollTriggeredSticky(stickyNav) {
+            let navOriginalTop = null;
+
+            function updateStickyBehavior() {
+                if (navOriginalTop === null) {
+                    navOriginalTop = stickyNav.getBoundingClientRect().top + window.pageYOffset;
+                }
+
+                const currentScrollY = window.pageYOffset;
+
+                if (currentScrollY > navOriginalTop) {
+                    stickyNav.classList.add('stuck');
+                } else {
+                    stickyNav.classList.remove('stuck');
+                }
+            }
+
+            // Add scroll listener
+            window.addEventListener('scroll', updateStickyBehavior);
+
+            // Initial check
+            setTimeout(updateStickyBehavior, 100);
+        }
+
+        function buildNewick(clusterId, clusters) {
+            const cluster = clusters[clusterId];
+            if (cluster.children.length === 0) {
+                return clusterId;
+            }
+
+            const subtrees = cluster.children.map(child => {
+                const subtree = buildNewick(child.id, clusters);
+                const branchLength = child.branchLength.toDecimal().toFixed(3);
+                return `${subtree}:${branchLength}`;
+            });
+
+            return `(${subtrees.join(',')})`;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            const stickyNav = document.getElementById('stickyNav');
+            stickyNav.classList.remove('visible');
+            stickyNav.classList.remove('stuck');
+            allSteps = [];
+
+            // Remove scroll listener if it exists
+            window.removeEventListener('scroll', updateStickyBehavior);
+        }
+
+        // Initialize
+        createMatrix();
+    </script>
+</body>
+
+</html>
