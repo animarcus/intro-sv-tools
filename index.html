@@ -1589,6 +1589,15 @@
                 }
             }
 
+            // Disconnect the old IntersectionObserver to prevent memory leaks from the previous run
+            if (scrollObserver) {
+                scrollObserver.disconnect();
+                scrollObserver = null;
+            }
+            // Only clear the output containers, NOT the input matrix
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('stickyNav').classList.remove('visible');
+
             const originalDistances = getDistanceMatrix();
             const exactDistances = {};
             for (const [key, value] of Object.entries(originalDistances)) {
