@@ -283,6 +283,8 @@
         }
 
         .matrix-display table {
+            width: 100%;
+            table-layout: fixed;
             margin: 0 auto;
             border-collapse: collapse;
             min-width: 300px;
@@ -765,12 +767,12 @@
             <h1>🧬 UPGMA Calculator</h1>
             <div class="top-controls">
                 <div class="control-group">
-                    <input type="checkbox" id="sequence-toggle" onchange="toggleInputView()" checked>
+                    <input type="checkbox" id="sequence-toggle" onchange="toggleInputView(); saveState();" checked>
                     <label for="sequence-toggle">Use Sequence Input</label>
                 </div>
                 <div class="control-group">
                     <label for="masterSizeSelector">Sequences:</label>
-                    <select id="masterSizeSelector" onchange="updateAllInputs()">
+                    <select id="masterSizeSelector" onchange="updateAllInputs(); saveState();">
                         <option value="3">3</option>
                         <option value="4">4</option>
                         <option value="5" selected>5</option>
@@ -834,6 +836,63 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(() => { func.apply(this, args); }, delay);
             };
+        }
+
+        function saveState() {
+            // 1. Collect all the data we want to save
+            const sequences = [];
+            for (let i = 0; i < matrixSize; i++) {
+                const seqInput = document.getElementById(`seq-${i}`);
+                if (seqInput) {
+                    sequences.push(seqInput.value);
+                }
+            }
+
+            const currentState = {
+                size: document.getElementById('masterSizeSelector').value,
+                useSequences: document.getElementById('sequence-toggle').checked,
+                sequences: sequences
+            };
+
+            // 2. Save the data object to localStorage as a JSON string
+            localStorage.setItem('upgmaCalculatorState', JSON.stringify(currentState));
+            console.log("State saved."); // Optional: for debugging
+        }
+
+        function loadState() {
+            const savedState = localStorage.getItem('upgmaCalculatorState');
+
+            if (savedState) {
+                console.log("Found saved state. Loading..."); // Optional: for debugging
+                const state = JSON.parse(savedState);
+
+                // 1. Restore UI settings from the saved state
+                document.getElementById('masterSizeSelector').value = state.size || '5';
+                document.getElementById('sequence-toggle').checked = state.useSequences;
+
+                // 2. Re-create the UI based on these restored settings
+                updateAllInputs();
+                toggleInputView();
+
+                // 3. Populate the sequence fields with the saved text
+                if (state.sequences) {
+                    state.sequences.forEach((seq, i) => {
+                        const seqInput = document.getElementById(`seq-${i}`);
+                        if (seqInput) {
+                            seqInput.value = seq;
+                        }
+                    });
+                }
+
+                // 4. Finally, update the highlights and matrix based on the loaded data
+                updateHighlightsAndMatrix();
+
+            } else {
+                // If no saved state exists, initialize the app normally
+                console.log("No saved state found. Initializing fresh."); // Optional: for debugging
+                updateAllInputs();
+                toggleInputView();
+            }
         }
 
         // Fraction class to handle exact arithmetic
@@ -944,7 +1003,10 @@
             container.innerHTML = '';
 
             // Create a debounced version of our new update function
-            const debouncedUpdate = debounce(updateHighlightsAndMatrix);
+            const debouncedUpdate = debounce(() => {
+                updateHighlightsAndMatrix();
+                saveState();
+            });
 
             for (let i = 0; i < count; i++) {
                 const input = document.createElement('input');
@@ -1899,8 +1961,7 @@
         }
 
         // Initialize
-        updateAllInputs();
-        toggleInputView();
+        loadState();
     </script>
 
 </html>
