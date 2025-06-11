@@ -24,10 +24,51 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
+        .diff-A {
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .diff-C {
+            background-color: #cce5ff;
+            color: #004085;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .diff-G {
+            background-color: #fff3cd;
+            color: #856404;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .diff-T {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .diff-error {
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .diff-column-border {
+            border: 1.5px solid #e74c3c;
+            /* A noticeable red border */
+            border-radius: 4px;
+            /* Slightly round the corners */
+        }
+
         h1 {
             color: #2c3e50;
             text-align: center;
-            margin-bottom: 30px;
             font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -89,7 +130,9 @@
         }
 
         .controls {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
             margin: 20px 0;
         }
 
@@ -465,6 +508,32 @@
             width: 100%;
         }
 
+        .sequence-highlight-display {
+            display: flex;
+            /* Make it a flex container */
+            justify-content: stretch;
+            /* Stretch items to fill the space */
+            height: 30px;
+            /* Increase height for bigger text */
+            line-height: 30px;
+            /* Center text vertically */
+            width: 100%;
+            /* Ensure it takes the full width */
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .sequence-highlight-display>span {
+            flex-grow: 1;
+            /* Allow each character to grow and take up space */
+            text-align: center;
+            /* Center the character within its space */
+            font-size: 1.4em;
+            /* Make the font noticeably bigger */
+            padding: 0 1px;
+            /* Add a tiny bit of padding */
+        }
+
         .current-merge {
             stroke: #e74c3c;
             stroke-width: 5;
@@ -541,6 +610,86 @@
             box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
         }
 
+        .hidden {
+            display: none !important;
+        }
+
+        .diff-highlight {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+
+        #diff-output {
+            max-height: 200px;
+            /* Set a smaller default height */
+            overflow-y: auto;
+            /* Add a scrollbar if content overflows */
+            resize: vertical;
+            /* Add the resize handle to the corner */
+            border: 1px solid #dee2e6;
+            /* Add a border to see the resizable area */
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .comparison-pair {
+            margin-bottom: 1em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0px;
+            margin-bottom: 10px;
+        }
+
+        .top-controls {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .input-wrapper.side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .diff-highlight {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+
+        .comparison-pair {
+            margin-bottom: 1em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid #e9ecef;
+        }
+
         /* === Responsive Layout for Tablets and Mobile === */
         @media (max-width: 1300px) {
 
@@ -601,64 +750,69 @@
                 height: 40px;
                 font-size: 12px;
             }
+
+            .input-wrapper.side-by-side {
+                grid-template-columns: 1fr;
+                /* On smaller screens, go back to a single column */
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>🧬 UPGMA Calculator</h1>
+        <header class="main-header">
+            <h1>🧬 UPGMA Calculator</h1>
+            <div class="top-controls">
+                <div class="control-group">
+                    <input type="checkbox" id="sequence-toggle" onchange="toggleInputView()" checked>
+                    <label for="sequence-toggle">Use Sequence Input</label>
+                </div>
+                <div class="control-group">
+                    <label for="masterSizeSelector">Sequences:</label>
+                    <select id="masterSizeSelector" onchange="updateAllInputs()">
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5" selected>5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </div>
+                <button onclick="fillExample()">📝 Fill Example</button>
+            </div>
+        </header>
 
-        <!-- Sequence Input Section -->
-        <div class="input-section" id="sequence-input-section">
-            <h2>🧬 Sequence Input</h2>
-            <div class="size-selector">
-                <label for="sequenceCount">Number of Sequences:</label>
-                <select id="sequenceCount" onchange="createSequenceInputs()">
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5" selected>5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                </select>
+        <div class="input-wrapper">
+            <div id="sequence-input-section" class="input-section">
+                <h2>🧬 Sequence Input</h2>
+                <div class="seq-container">
+                    <div id="sequenceInputs" class="sequence-input"></div>
+                </div>
+                <div class="controls">
+                    <button onclick="computeDistanceMatrix()">📏 Compute Matrix & Show Differences</button>
+                </div>
             </div>
-            <div class="seq-container">
-                <div id="sequenceInputs" class="sequence-input"></div>
-            </div>
-            <div class="controls">
-                <button onclick="computeDistanceMatrix()">📏 Compute Distance Matrix</button>
+
+            <div id="matrix-input-section" class="input-section">
+                <h2>📊 Distance Matrix</h2>
+                <div class="matrix-container">
+                    <div id="matrixInput"></div>
+                </div>
+                <div class="controls" id="main-controls" style="margin-top: auto;">
+                    <button onclick="runUPGMA()">🚀 Start UPGMA Analysis</button>
+                </div>
             </div>
         </div>
 
-        <!-- Distance Matrix Input Section -->
-        <div class="input-section">
-            <h2>📊 Distance Matrix Input</h2>
-            <div class="size-selector">
-                <label for="matrixSize">Matrix Size:</label>
-                <select id="matrixSize" onchange="createMatrix()">
-                    <option value="3">3×3</option>
-                    <option value="4">4×4</option>
-                    <option value="5" selected>5×5</option>
-                    <option value="6">6×6</option>
-                    <option value="7">7×7</option>
-                </select>
-            </div>
-
-            <div class="matrix-container">
-                <div id="matrixInput"></div>
-            </div>
-
-            <p><strong>💡 Pro Tip:</strong> Only fill the upper triangle - the matrix will be automatically mirrored!
-                Perfect for manual distance counting from sequences.</p>
+        <div id="diff-highlight-section" class="input-section hidden" style="border-left-color: #17a2b8;">
+            <h2>Highlighted Differences (Hamming Distance)</h2>
+            <div id="diff-output" style="font-family: 'Courier New', monospace; line-height: 1.6;"></div>
         </div>
 
         <div class="controls">
-            <button onclick="fillExample()">📝 Fill Example Data</button>
-            <button onclick="runUPGMA()">🚀 Start UPGMA Analysis</button>
-            <button onclick="clearResults()">🗑️ Clear Results</button>
+            <button onclick="clearResults()">🗑️ Clear All Results</button>
         </div>
 
-        <!-- Navigation bar back in document flow -->
         <div id="stickyNav" class="sticky-nav">
             <div class="step-indicator">Navigate Steps:</div>
             <div id="navButtons"></div>
@@ -673,6 +827,14 @@
         let allSteps = [];
 
         let scrollObserver = null
+
+        function debounce(func, delay = 300) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => { func.apply(this, args); }, delay);
+            };
+        }
 
         // Fraction class to handle exact arithmetic
         class Fraction {
@@ -743,82 +905,174 @@
             }
         }
 
+        function initializeUI() {
+            updateAllInputs();
+            toggleInputView();
+        }
+
+        function toggleInputView() {
+            const useSequences = document.getElementById('sequence-toggle').checked;
+            const seqSection = document.getElementById('sequence-input-section');
+            const matrixSection = document.getElementById('matrix-input-section');
+            const wrapper = document.querySelector('.input-wrapper');
+            const diffSection = document.getElementById('diff-highlight-section');
+
+            // If using sequences, show both panels side-by-side
+            if (useSequences) {
+                wrapper.classList.add('side-by-side');
+                seqSection.classList.remove('hidden');
+                matrixSection.classList.remove('hidden');
+            } else { // Otherwise, show only the matrix panel
+                wrapper.classList.remove('side-by-side');
+                seqSection.classList.add('hidden');
+                matrixSection.classList.remove('hidden');
+                diffSection.classList.add('hidden');
+            }
+        }
+
+        function updateAllInputs() {
+            matrixSize = parseInt(document.getElementById('masterSizeSelector').value);
+            createSequenceInputs();
+            createMatrix();
+        }
+
+        // --- Input and Matrix Functions ---
+
         function createSequenceInputs() {
-            const count = +document.getElementById('sequenceCount').value;
+            const count = matrixSize;
             const container = document.getElementById('sequenceInputs');
             container.innerHTML = '';
+
+            // Create a debounced version of our new update function
+            const debouncedUpdate = debounce(updateHighlightsAndMatrix);
+
             for (let i = 0; i < count; i++) {
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = `seq-${i}`;
                 input.placeholder = `Sequence ${i + 1}`;
+
+                input.autocorrect = 'off';
+                input.autocapitalize = 'off';
+                input.spellcheck = false;
+
+                input.autocomplete = 'off';
+                input.addEventListener('input', debouncedUpdate);
                 container.appendChild(input);
+
+                const highlightDiv = document.createElement('div');
+                highlightDiv.id = `seq-highlight-${i}`;
+                highlightDiv.className = 'sequence-highlight-display';
+                container.appendChild(highlightDiv);
             }
         }
 
-        function hamming(a, b) {
-            if (a.length !== b.length) return NaN;
-            let d = 0;
-            for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
-            return d;
-        }
-
-        function computeDistanceMatrix() {
-            const count = +document.getElementById('sequenceCount').value;
+        function updateHighlightsAndMatrix() {
             const seqs = [];
-            for (let i = 0; i < count; i++) {
-                const s = document.getElementById(`seq-${i}`).value.trim().toUpperCase();
-                if (!s) { alert('Please fill all sequence fields.'); return; }
-                seqs.push(s);
-            }
-            const len = seqs[0].length;
-            if (!seqs.every(s => s.length === len)) { alert('All sequences must have the same length.'); return; }
-            labels = seqs.map((_, i) => `Seq${i + 1}`);
-            document.getElementById('matrixSize').value = count;
-            matrixSize = count;
-            createMatrix();
-            for (let i = 0; i < count; i++) {
-                for (let j = i + 1; j < count; j++) {
-                    const d = hamming(seqs[i], seqs[j]);
-                    document.getElementById(`cell-${i}-${j}`).value = d;
-                    document.getElementById(`cell-${j}-${i}`).value = d;
+            const highlightDivs = [];
+            let firstSeqLength = -1;
+            let allSameLength = true;
+
+            // 1. Gather all sequences and check lengths
+            for (let i = 0; i < matrixSize; i++) {
+                const seqInput = document.getElementById(`seq-${i}`);
+                const seq = seqInput.value.trim().toUpperCase();
+                seqs.push(seq);
+                highlightDivs.push(document.getElementById(`seq-highlight-${i}`));
+
+                if (seq.length > 0) {
+                    if (firstSeqLength === -1) {
+                        firstSeqLength = seq.length;
+                    } else if (seq.length !== firstSeqLength) {
+                        allSameLength = false;
+                    }
                 }
+            }
+
+            // Clear highlights if lengths differ or fields are empty
+            if (!allSameLength || firstSeqLength === 0) {
+                highlightDivs.forEach(div => div.innerHTML = '');
+                return;
+            }
+
+            // 2. Find all positions that have at least one difference
+            const diffPositions = new Set();
+            for (let i = 0; i < firstSeqLength; i++) {
+                let firstChar = null;
+                for (let j = 0; j < seqs.length; j++) {
+                    // Only compare against other sequences that have content
+                    if (seqs[j].length !== firstSeqLength || seqs[j][i] === ' ') continue;
+
+                    if (firstChar === null) {
+                        firstChar = seqs[j][i];
+                    } else if (seqs[j][i] !== firstChar) {
+                        diffPositions.add(i);
+                        break;
+                    }
+                }
+            }
+
+            // 3. Build and display the highlighted HTML for each sequence
+            for (let i = 0; i < seqs.length; i++) {
+                let html = '';
+                if (seqs[i].length === firstSeqLength) {
+                    for (let j = 0; j < seqs[i].length; j++) {
+                        const char = seqs[i][j];
+
+                        if (char === ' ') {
+                            html += `<span>&nbsp;</span>`;
+                            continue;
+                        }
+
+                        let colorClass = 'diff-error';
+                        if ('A' === char) colorClass = 'diff-A';
+                        else if ('C' === char) colorClass = 'diff-C';
+                        else if ('G' === char) colorClass = 'diff-G';
+                        else if ('T' === char) colorClass = 'diff-T';
+
+                        let finalClasses = [colorClass];
+
+                        // --- THIS IS THE NEW LOGIC ---
+                        // If the character is in a column with differences, add the border class.
+                        if (diffPositions.has(j)) {
+                            finalClasses.push('diff-column-border');
+                        }
+                        // -----------------------------
+
+                        html += `<span class="${finalClasses.join(' ')}">${char}</span>`;
+                    }
+                }
+                highlightDivs[i].innerHTML = html;
+            }
+
+            // 4. If everything is valid, compute the distance matrix automatically
+            const allFieldsFilled = seqs.every(s => s.length === firstSeqLength && s.length > 0);
+            if (allFieldsFilled) {
+                computeDistanceMatrix();
             }
         }
 
         function createMatrix() {
-            matrixSize = parseInt(document.getElementById('matrixSize').value);
-            labels = Array.from({ length: matrixSize }, (_, i) => String(i + 1));
-
+            labels = Array.from({ length: matrixSize }, (_, i) => `Seq ${i + 1}`);
             const container = document.getElementById('matrixInput');
             container.innerHTML = '';
-
             const matrix = document.createElement('div');
             matrix.className = 'matrix-input';
             matrix.style.gridTemplateColumns = `repeat(${matrixSize + 1}, 1fr)`;
-
-            // Header row
             const emptyCell = document.createElement('div');
             emptyCell.className = 'matrix-cell matrix-header';
-            emptyCell.textContent = '';
             matrix.appendChild(emptyCell);
-
             for (let j = 0; j < matrixSize; j++) {
                 const headerCell = document.createElement('div');
                 headerCell.className = 'matrix-cell matrix-header';
                 headerCell.textContent = labels[j];
                 matrix.appendChild(headerCell);
             }
-
-            // Data rows
             for (let i = 0; i < matrixSize; i++) {
-                // Row header
                 const rowHeader = document.createElement('div');
                 rowHeader.className = 'matrix-cell matrix-header';
                 rowHeader.textContent = labels[i];
                 matrix.appendChild(rowHeader);
-
-                // Data cells
                 for (let j = 0; j < matrixSize; j++) {
                     const cell = document.createElement('input');
                     cell.className = 'matrix-cell';
@@ -826,7 +1080,6 @@
                     cell.min = '0';
                     cell.step = '0.1';
                     cell.id = `cell-${i}-${j}`;
-
                     if (i === j) {
                         cell.value = '0';
                         cell.disabled = true;
@@ -836,16 +1089,93 @@
                         cell.classList.add('matrix-diagonal');
                         cell.placeholder = 'auto';
                     }
-
                     if (i < j) {
                         cell.addEventListener('input', updateSymmetric);
                     }
-
                     matrix.appendChild(cell);
                 }
             }
-
             container.appendChild(matrix);
+        }
+
+        function hamming(a, b) {
+            if (a.length !== b.length) return { dist: NaN, html: '' };
+            let dist = 0;
+            let aHtml = '';
+            let bHtml = '';
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) {
+                    dist++;
+                    aHtml += `<span class="diff-highlight">${a[i]}</span>`;
+                    bHtml += `<span class="diff-highlight">${b[i]}</span>`;
+                } else {
+                    aHtml += a[i];
+                    bHtml += b[i];
+                }
+            }
+            return { dist, aHtml, bHtml };
+        }
+
+        function computeDistanceMatrix() {
+            const seqs = [];
+            for (let i = 0; i < matrixSize; i++) {
+                const s = document.getElementById(`seq-${i}`).value.trim().toUpperCase();
+                if (!s) { alert('Please fill all sequence fields.'); return; }
+                seqs.push(s);
+            }
+            if (seqs.length > 0) {
+                const len = seqs[0].length;
+                if (!seqs.every(s => s.length === len)) { alert('All sequences must have the same length.'); return; }
+            }
+
+            const diffSection = document.getElementById('diff-highlight-section');
+            const diffOutput = document.getElementById('diff-output');
+            diffOutput.innerHTML = '';
+            diffSection.classList.remove('hidden');
+
+            for (let i = 0; i < matrixSize; i++) {
+                for (let j = i + 1; j < matrixSize; j++) {
+                    const { dist, aHtml, bHtml } = hamming(seqs[i], seqs[j]);
+                    document.getElementById(`cell-${i}-${j}`).value = dist;
+                    document.getElementById(`cell-${j}-${i}`).value = dist;
+
+                    const pairHtml = document.createElement('div');
+                    pairHtml.className = 'comparison-pair';
+                    pairHtml.innerHTML = `
+                <strong>Seq ${i + 1} vs Seq ${j + 1} (Distance: ${dist})</strong><br>
+                ${aHtml}<br>${bHtml}
+            `;
+                    diffOutput.appendChild(pairHtml);
+                }
+            }
+        }
+
+        function fillExample() {
+            // 1. Define the example sequences
+            const exampleSequences = [
+                "cagagactggatttacagcataagtttgcg",
+                "cacagactggattaacagcataagtttgcg",
+                "cacagagtggattaagagctttagttaccg",
+                "cacagagtgcattaacagcattagttagcg",
+                "cacagactgcattaagagcttaagttaccg"
+            ];
+
+            // 2. Set the UI to the correct state
+            document.getElementById('masterSizeSelector').value = '5';
+            updateAllInputs(); // This will create 5 input fields
+            document.getElementById('sequence-toggle').checked = true;
+            toggleInputView();
+
+            // 3. Populate the sequence input fields
+            exampleSequences.forEach((seq, i) => {
+                const seqInput = document.getElementById(`seq-${i}`);
+                if (seqInput) {
+                    seqInput.value = seq;
+                }
+            });
+
+            // 4. Trigger the dynamic highlighting and matrix calculation
+            updateHighlightsAndMatrix();
         }
 
         function updateSymmetric(event) {
@@ -856,27 +1186,7 @@
             }
         }
 
-        function fillExample() {
-            const exampleData = [
-                [0, 2, 8, 6, 7],
-                [2, 0, 6, 4, 5],
-                [8, 6, 0, 4, 3],
-                [6, 4, 4, 0, 5],
-                [7, 5, 3, 5, 0]
-            ];
 
-            document.getElementById('matrixSize').value = '5';
-            createMatrix();
-
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 5; j++) {
-                    const cell = document.getElementById(`cell-${i}-${j}`);
-                    if (cell && !cell.disabled) {
-                        cell.value = exampleData[i][j];
-                    }
-                }
-            }
-        }
 
         function getDistanceMatrix() {
             const matrix = {};
@@ -912,7 +1222,7 @@
 
                         let displayValue;
                         displayValue = Number.isInteger(distance) ? distance.toString() : distance.toString();
-                        
+
 
                         // Determine cell classes
                         let cellClasses = [];
@@ -1216,8 +1526,6 @@
                     }
                 }
             }
-            // Properly clean up any previous observers
-            clearResults();
 
             const originalDistances = getDistanceMatrix();
             const exactDistances = {};
@@ -1225,7 +1533,9 @@
                 exactDistances[key] = new Fraction(value);
             }
 
-            let distances = { ...exactDistances };
+            let distances = {
+                ...exactDistances
+            };
             let activeLabels = [...labels];
             let clusters = {};
             let mergeHistory = [];
@@ -1249,22 +1559,22 @@
             initialStepDiv.className = 'step';
             initialStepDiv.id = 'step-0';
             initialStepDiv.innerHTML = `
-                <h3>📋 Initial State</h3>
-                <div class="step-content">
-                    <div class="tree-section">
-                        <div class="tree-container">
-                            <h4>🌱 Individual Sequences</h4>
-                            ${initialTree.outerHTML}
-                        </div>
-                    </div>
-                    <div class="matrix-section">
-                        <div class="matrix-display">
-                            <h4>🔢 Initial Distance Matrix</h4>
-                            ${formatMatrix(distances, activeLabels)}
-                        </div>
-                    </div>
-                </div>
-            `;
+    <h3>📋 Initial State</h3>
+    <div class="step-content">
+        <div class="tree-section">
+            <div class="tree-container">
+                <h4>🌱 Individual Sequences</h4>
+                ${initialTree.outerHTML}
+            </div>
+        </div>
+        <div class="matrix-section">
+            <div class="matrix-display">
+                <h4>🔢 Initial Distance Matrix</h4>
+                ${formatMatrix(distances, activeLabels)}
+            </div>
+        </div>
+    </div>
+`;
             resultsDiv.appendChild(initialStepDiv);
 
             let stepNumber = 1;
@@ -1289,15 +1599,24 @@
                 clusters[newClusterId] = {
                     members: [...clusters[cluster1].members, ...clusters[cluster2].members],
                     height: newHeight,
-                    children: [
-                        { id: cluster1, branchLength: branch1Length },
-                        { id: cluster2, branchLength: branch2Length }
-                    ],
+                    children: [{
+                        id: cluster1,
+                        branchLength: branch1Length
+                    }, {
+                        id: cluster2,
+                        branchLength: branch2Length
+                    }],
                     originalLabel: newClusterId
                 };
                 const currentMerge = {
-                    step: stepNumber, cluster1, cluster2, distance: minDist,
-                    height: newHeight, newId: newClusterId, branch1Length, branch2Length
+                    step: stepNumber,
+                    cluster1,
+                    cluster2,
+                    distance: minDist,
+                    height: newHeight,
+                    newId: newClusterId,
+                    branch1Length,
+                    branch2Length
                 };
                 mergeHistory.push(currentMerge);
 
@@ -1330,13 +1649,13 @@
                         const count = members1.length * members2.length;
                         const avgDist = totalDist.divide(count);
                         const detailedCalc = `
-                            <div class="calculation-detail">
-                                <strong>📐 For d(${newClusterId}, ${otherLabel}):</strong><br>
-                                ${detailedSteps.join('<br>')}<br>
-                                <strong>Sum:</strong> ${individualDistances.join(' + ')} = <span class="fraction">${totalDist.toString()}</span><br>
-                                <strong>Count:</strong> ${members1.length} × ${members2.length} = ${count}<br>
-                                <strong>Average:</strong> <span class="fraction">${totalDist.toString()}</span> ÷ ${count} = <span class="fraction">${avgDist.toString()}</span> = ${avgDist.toDecimal().toFixed(3)}
-                            </div>`;
+                <div class="calculation-detail">
+                    <strong>📐 For d(${newClusterId}, ${otherLabel}):</strong><br>
+                    ${detailedSteps.join('<br>')}<br>
+                    <strong>Sum:</strong> ${individualDistances.join(' + ')} = <span class="fraction">${totalDist.toString()}</span><br>
+                    <strong>Count:</strong> ${members1.length} × ${members2.length} = ${count}<br>
+                    <strong>Average:</strong> <span class="fraction">${totalDist.toString()}</span> ÷ ${count} = <span class="fraction">${avgDist.toString()}</span> = ${avgDist.toDecimal().toFixed(3)}
+                </div>`;
                         calculationDetails.push(detailedCalc);
                         const sortedPair = [newClusterId, otherLabel].sort();
                         const newKey = `${sortedPair[0]}|||${sortedPair[1]}`;
@@ -1360,39 +1679,39 @@
                 let calculationHtml = '';
                 if (calculationDetails.length > 0) {
                     calculationHtml = `
-                        <div class="calculations-section">
-                            <div class="new-calculations">
-                                <h4>🔢 New Distance Calculations (UPGMA Formula)</h4>
-                                ${calculationDetails.join('')}
-                            </div>
-                        </div>`;
+            <div class="calculations-section">
+                <div class="new-calculations">
+                    <h4>🔢 New Distance Calculations (UPGMA Formula)</h4>
+                    ${calculationDetails.join('')}
+                </div>
+            </div>`;
                 }
 
                 stepDiv.innerHTML = `
-                    <h3>🔄 Step ${stepNumber} of ${totalMergeSteps}: Merge <span class="cluster-name">${cluster1}</span> and <span class="cluster-name">${cluster2}</span></h3>
-                    <div class="merge-info">
-                        <strong>🎯 Minimum Distance Found:</strong> <span class="fraction">${minDist.toString()}</span> = ${minDist.toDecimal().toFixed(3)}<br>
-                        <strong>📏 New Cluster Height:</strong> <span class="fraction">${minDist.toString()}/2</span> = <span class="fraction">${newHeight.toString()}</span> = ${newHeight.toDecimal().toFixed(3)}<br>
-                        <strong>🌿 Branch Length Calculations:</strong><br>
-                        • <span class="cluster-name">${cluster1}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster1].height.toString()}</span> = <span class="fraction">${branch1Length.toString()}</span> = ${branch1Length.toDecimal().toFixed(3)}<br>
-                        • <span class="cluster-name">${cluster2}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster2].height.toString()}</span> = <span class="fraction">${branch2Length.toString()}</span> = ${branch2Length.toDecimal().toFixed(3)}
-                    </div>
-                    <div class="step-content">
-                        <div class="tree-section">
-                            <div class="tree-container">
-                                <h4>🌿 Current Tree State</h4>
-                                ${currentTree.outerHTML}
-                            </div>
-                        </div>
-                        <div class="matrix-section">
-                            <div class="matrix-display">
-                                <h4>📊 Updated Distance Matrix</h4>
-                                ${formatMatrix(distances, activeLabels, newCalculations)}
-                            </div>
-                        </div>
-                    </div>
-                    ${calculationHtml}
-                `;
+        <h3>🔄 Step ${stepNumber} of ${totalMergeSteps}: Merge <span class="cluster-name">${cluster1}</span> and <span class="cluster-name">${cluster2}</span></h3>
+        <div class="merge-info">
+            <strong>🎯 Minimum Distance Found:</strong> <span class="fraction">${minDist.toString()}</span> = ${minDist.toDecimal().toFixed(3)}<br>
+            <strong>📏 New Cluster Height:</strong> <span class="fraction">${minDist.toString()}/2</span> = <span class="fraction">${newHeight.toString()}</span> = ${newHeight.toDecimal().toFixed(3)}<br>
+            <strong>🌿 Branch Length Calculations:</strong><br>
+            • <span class="cluster-name">${cluster1}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster1].height.toString()}</span> = <span class="fraction">${branch1Length.toString()}</span> = ${branch1Length.toDecimal().toFixed(3)}<br>
+            • <span class="cluster-name">${cluster2}</span>: <span class="fraction">${newHeight.toString()} - ${clusters[cluster2].height.toString()}</span> = <span class="fraction">${branch2Length.toString()}</span> = ${branch2Length.toDecimal().toFixed(3)}
+        </div>
+        <div class="step-content">
+            <div class="tree-section">
+                <div class="tree-container">
+                    <h4>🌿 Current Tree State</h4>
+                    ${currentTree.outerHTML}
+                </div>
+            </div>
+            <div class="matrix-section">
+                <div class="matrix-display">
+                    <h4>📊 Updated Distance Matrix</h4>
+                    ${formatMatrix(distances, activeLabels, newCalculations)}
+                </div>
+            </div>
+        </div>
+        ${calculationHtml}
+    `;
                 resultsDiv.appendChild(stepDiv);
                 stepNumber++;
             }
@@ -1407,10 +1726,10 @@
             let mergeSummaryHtml = '<div class="merge-summary">';
             for (const merge of mergeHistory) {
                 mergeSummaryHtml += `
-                    <div class="merge-item">
-                        <strong>Step ${merge.step}:</strong> ${merge.cluster1} + ${merge.cluster2}<br>
-                        <small>Distance: <span class="fraction">${merge.distance.toString()}</span> → Height: <span class="fraction">${merge.height.toString()}</span></small>
-                    </div>`;
+        <div class="merge-item">
+            <strong>Step ${merge.step}:</strong> ${merge.cluster1} + ${merge.cluster2}<br>
+            <small>Distance: <span class="fraction">${merge.distance.toString()}</span> → Height: <span class="fraction">${merge.height.toString()}</span></small>
+        </div>`;
             }
             mergeSummaryHtml += '</div>';
 
@@ -1418,28 +1737,28 @@
             finalStepDiv.className = 'step';
             finalStepDiv.id = `step-${stepNumber}`;
             finalStepDiv.innerHTML = `
-                <h3>🏆 Complete Phylogenetic Tree</h3>
-                <div class="step-content">
-                    <div class="tree-section">
-                        <div class="tree-container">
-                            <h4>🌳 Final Phylogenetic Tree</h4>
-                            ${finalTree.outerHTML}
-                        </div>
-                    </div>
-                    <div class="matrix-section">
-                        <div class="final-tree">
-                            <strong>🧬 Newick Format:</strong><br>
-                            <code>${newick};</code>
-                        </div>
-                        <h4>📝 Complete Merge History:</h4>
-                        <ul style="list-style-type: none; padding-left: 0;">
-                            ${mergeHistory.map(merge => `
-                                <li style="margin-bottom: 1em;"><strong>Step ${merge.step}:</strong> Merged <span class="cluster-name">${merge.cluster1}</span> and <span class="cluster-name">${merge.cluster2}</span><br>
-                                    <small><strong>Distance:</strong> <span class="fraction">${merge.distance.toString()}</span> → <strong>Height:</strong> <span class="fraction">${merge.height.toString()}</span></small>
-                                </li>`).join('')}
-                        </ul>
-                    </div>
-                </div>`;
+    <h3>🏆 Complete Phylogenetic Tree</h3>
+    <div class="step-content">
+        <div class="tree-section">
+            <div class="tree-container">
+                <h4>🌳 Final Phylogenetic Tree</h4>
+                ${finalTree.outerHTML}
+            </div>
+        </div>
+        <div class="matrix-section">
+            <div class="final-tree">
+                <strong>🧬 Newick Format:</strong><br>
+                <code>${newick};</code>
+            </div>
+            <h4>📝 Complete Merge History:</h4>
+            <ul style="list-style-type: none; padding-left: 0;">
+                ${mergeHistory.map(merge => `
+                    <li style="margin-bottom: 1em;"><strong>Step ${merge.step}:</strong> Merged <span class="cluster-name">${merge.cluster1}</span> and <span class="cluster-name">${merge.cluster2}</span><br>
+                        <small><strong>Distance:</strong> <span class="fraction">${merge.distance.toString()}</span> → <strong>Height:</strong> <span class="fraction">${merge.height.toString()}</span></small>
+                    </li>`).join('')}
+            </ul>
+        </div>
+    </div>`;
             resultsDiv.appendChild(finalStepDiv);
 
             const completion = document.createElement('div');
@@ -1549,14 +1868,39 @@
                 scrollObserver.disconnect();
                 scrollObserver = null;
             }
+
+            // Clear the main UPGMA steps
             document.getElementById('results').innerHTML = '';
+
+            // Hide the sticky navigation bar
             const stickyNav = document.getElementById('stickyNav');
             stickyNav.classList.remove('visible');
+
+            // Clear sequence inputs and their highlights
+            for (let i = 0; i < matrixSize; i++) {
+                const seqInput = document.getElementById(`seq-${i}`);
+                if (seqInput) {
+                    seqInput.value = '';
+                }
+                const highlightDiv = document.getElementById(`seq-highlight-${i}`);
+                if (highlightDiv) {
+                    highlightDiv.innerHTML = '';
+                }
+            }
+
+            // Clear the pairwise difference section
+            const diffOutput = document.getElementById('diff-output');
+            diffOutput.innerHTML = '';
+            document.getElementById('diff-highlight-section').classList.add('hidden');
+
+            // Clear the distance matrix inputs
+            const matrixInputs = document.querySelectorAll('.matrix-input input:not(:disabled)');
+            matrixInputs.forEach(input => input.value = '');
         }
 
         // Initialize
-        createMatrix();
+        updateAllInputs();
+        toggleInputView();
     </script>
-</body>
 
 </html>
