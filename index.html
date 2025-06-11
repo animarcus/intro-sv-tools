@@ -40,7 +40,8 @@
             border-left: 5px solid #007bff;
         }
 
-        .matrix-container {
+        .matrix-container,
+        .seq-container {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -448,6 +449,22 @@
             max-width: 100%;
         }
 
+        .sequence-input {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sequence-input input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            width: 100%;
+        }
+
         .current-merge {
             stroke: #e74c3c;
             stroke-width: 5;
@@ -592,6 +609,28 @@
     <div class="container">
         <h1>🧬 UPGMA Calculator</h1>
 
+        <!-- Sequence Input Section -->
+        <div class="input-section" id="sequence-input-section">
+            <h2>🧬 Sequence Input</h2>
+            <div class="size-selector">
+                <label for="sequenceCount">Number of Sequences:</label>
+                <select id="sequenceCount" onchange="createSequenceInputs()">
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5" selected>5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+            </div>
+            <div class="seq-container">
+                <div id="sequenceInputs" class="sequence-input"></div>
+            </div>
+            <div class="controls">
+                <button onclick="computeDistanceMatrix()">📏 Compute Distance Matrix</button>
+            </div>
+        </div>
+
+        <!-- Distance Matrix Input Section -->
         <div class="input-section">
             <h2>📊 Distance Matrix Input</h2>
             <div class="size-selector">
@@ -701,6 +740,49 @@
                 }
 
                 return `${this.num}/${this.den}`;
+            }
+        }
+
+        function createSequenceInputs() {
+            const count = +document.getElementById('sequenceCount').value;
+            const container = document.getElementById('sequenceInputs');
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `seq-${i}`;
+                input.placeholder = `Sequence ${i + 1}`;
+                container.appendChild(input);
+            }
+        }
+
+        function hamming(a, b) {
+            if (a.length !== b.length) return NaN;
+            let d = 0;
+            for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
+            return d;
+        }
+
+        function computeDistanceMatrix() {
+            const count = +document.getElementById('sequenceCount').value;
+            const seqs = [];
+            for (let i = 0; i < count; i++) {
+                const s = document.getElementById(`seq-${i}`).value.trim().toUpperCase();
+                if (!s) { alert('Please fill all sequence fields.'); return; }
+                seqs.push(s);
+            }
+            const len = seqs[0].length;
+            if (!seqs.every(s => s.length === len)) { alert('All sequences must have the same length.'); return; }
+            labels = seqs.map((_, i) => `Seq${i + 1}`);
+            document.getElementById('matrixSize').value = count;
+            matrixSize = count;
+            createMatrix();
+            for (let i = 0; i < count; i++) {
+                for (let j = i + 1; j < count; j++) {
+                    const d = hamming(seqs[i], seqs[j]);
+                    document.getElementById(`cell-${i}-${j}`).value = d;
+                    document.getElementById(`cell-${j}-${i}`).value = d;
+                }
             }
         }
 
@@ -829,11 +911,8 @@
                         const distance = distances[key1] || distances[key2] || 0;
 
                         let displayValue;
-                        if (distance instanceof Fraction) {
-                            displayValue = distance.toMixedString();
-                        } else {
-                            displayValue = Number.isInteger(distance) ? distance.toString() : distance.toFixed(3);
-                        }
+                        displayValue = Number.isInteger(distance) ? distance.toString() : distance.toString();
+                        
 
                         // Determine cell classes
                         let cellClasses = [];
