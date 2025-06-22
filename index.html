@@ -778,6 +778,9 @@
                         <option value="5" selected>5</option>
                         <option value="6">6</option>
                         <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
                     </select>
                 </div>
                 <button onclick="fillExample()">📝 Fill Example</button>
@@ -848,10 +851,20 @@
                 }
             }
 
+            const matrixValues = [];
+            for (let i = 0; i < matrixSize; i++) {
+                matrixValues[i] = [];
+                for (let j = 0; j < matrixSize; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    matrixValues[i][j] = cell ? cell.value : '';
+                }
+            }
+
             const currentState = {
                 size: document.getElementById('masterSizeSelector').value,
                 useSequences: document.getElementById('sequence-toggle').checked,
-                sequences: sequences
+                sequences: sequences,
+                matrixValues: matrixValues
             };
 
             // 2. Save the data object to localStorage as a JSON string
@@ -887,6 +900,16 @@
                 // 4. Finally, update the highlights and matrix based on the loaded data
                 updateHighlightsAndMatrix();
 
+                if (state.matrixValues) {
+                    for (let i = 0; i < state.matrixValues.length; i++) {
+                        for (let j = 0; j < state.matrixValues[i].length; j++) {
+                            const cell = document.getElementById(`cell-${i}-${j}`);
+                            if (cell && state.matrixValues[i][j] !== undefined) {
+                                cell.value = state.matrixValues[i][j];
+                            }
+                        }
+                    }
+                }
             } else {
                 // If no saved state exists, initialize the app normally
                 console.log("No saved state found. Initializing fresh."); // Optional: for debugging
@@ -990,14 +1013,22 @@
         }
 
         function updateAllInputs() {
+            // Save current sequence values before rebuilding
+            const prevSequences = [];
+            for (let i = 0; i < matrixSize; i++) {
+                const seqInput = document.getElementById(`seq-${i}`);
+                if (seqInput) prevSequences.push(seqInput.value);
+                else prevSequences.push('');
+            }
+
             matrixSize = parseInt(document.getElementById('masterSizeSelector').value);
-            createSequenceInputs();
+            createSequenceInputs(prevSequences);
             createMatrix();
         }
 
         // --- Input and Matrix Functions ---
 
-        function createSequenceInputs() {
+        function createSequenceInputs(prevSequences = []) {
             const count = matrixSize;
             const container = document.getElementById('sequenceInputs');
             container.innerHTML = '';
@@ -1013,13 +1044,15 @@
                 input.type = 'text';
                 input.id = `seq-${i}`;
                 input.placeholder = `Sequence ${i + 1}`;
-
                 input.autocorrect = 'off';
                 input.autocapitalize = 'off';
                 input.spellcheck = false;
-
                 input.autocomplete = 'off';
                 input.addEventListener('input', debouncedUpdate);
+
+                // Restore previous value if available
+                if (prevSequences[i]) input.value = prevSequences[i];
+
                 container.appendChild(input);
 
                 const highlightDiv = document.createElement('div');
