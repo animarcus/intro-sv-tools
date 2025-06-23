@@ -576,63 +576,48 @@
 
             // Sequence header controls
             const headerControls = `
-            <div class="header-controls">
-                <div class="control-group">
-                    <input type="checkbox" id="lowercase" ${lowercase ? 'checked' : ''}>
-                    <label for="lowercase">Minuscules</label>
-                </div>
-                <div class="control-group">
-                    <input type="checkbox" id="showComplement" ${showComplement ? 'checked' : ''}>
-                    <label for="showComplement">Brin complémentaire</label>
-                </div>
-                <div class="control-group">
-                    <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
-                    <label for="showSTR">Afficher STR sur séquence</label>
-                </div>
+        <div class="header-controls">
+            <div class="control-group">
+                <input type="checkbox" id="lowercase" ${lowercase ? 'checked' : ''}>
+                <label for="lowercase">Minuscules</label>
             </div>
-        `;
+            <div class="control-group">
+                <input type="checkbox" id="showComplement" ${showComplement ? 'checked' : ''}>
+                <label for="showComplement">Brin complémentaire</label>
+            </div>
+            <div class="control-group">
+                <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
+                <label for="showSTR">Afficher STR sur séquence</label>
+            </div>
+        </div>
+    `;
 
-            if (mutatedSequence) {
-                displayDiv.innerHTML = `
-                <div class="side-by-side">
-                    <div>
-                        <div class="sequence-header">
-                            <div class="sequence-label">Séquence Originale</div>
-                            ${headerControls}
-                        </div>
-                        ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
-                    </div>
-                    <div>
-                        <div class="sequence-label">Séquence Mutée</div>
-                        ${generateSequenceHTML(mutatedSequence, chunking, columns, direction, showSTR, false, 'mutated')}
-                    </div>
-                </div>
-                ${showComplement ? `
-                    <div class="side-by-side">
-                        <div>
-                            <div class="sequence-label">Brin Complémentaire (Original)</div>
-                            ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
-                        </div>
-                        <div>
-                            <div class="sequence-label">Brin Complémentaire (Muté)</div>
-                            ${generateSequenceHTML(getComplement(mutatedSequence), chunking, columns, direction, false, true)}
-                        </div>
-                    </div>
-                ` : ''}
-            `;
-            } else {
-                displayDiv.innerHTML = `
+            // Always show original sequence, mutated below if present
+            displayDiv.innerHTML = `
+        <div class="sequence-header">
+            <div class="sequence-label">Séquence Originale</div>
+            ${headerControls}
+        </div>
+        ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+        ${mutatedSequence ? `
+            <div class="sequence-header">
+                <div class="sequence-label">Séquence Mutée</div>
+            </div>
+            ${generateSequenceHTML(mutatedSequence, chunking, columns, direction, showSTR, false, 'mutated')}
+        ` : ''}
+        ${showComplement ? `
+            <div class="sequence-header">
+                <div class="sequence-label">Brin Complémentaire${mutatedSequence ? " (Original)" : ""}</div>
+            </div>
+            ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
+            ${mutatedSequence ? `
                 <div class="sequence-header">
-                    <div class="sequence-label">Séquence Originale</div>
-                    ${headerControls}
+                    <div class="sequence-label">Brin Complémentaire (Muté)</div>
                 </div>
-                ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
-                ${showComplement ? `
-                    <div class="sequence-label">Brin Complémentaire</div>
-                    ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
-                ` : ''}
-            `;
-            }
+                ${generateSequenceHTML(getComplement(mutatedSequence), chunking, columns, direction, false, true)}
+            ` : ''}
+        ` : ''}
+    `;
 
             // Re-attach event listeners
             attachSequenceEventListeners();
