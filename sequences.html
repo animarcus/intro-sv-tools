@@ -51,12 +51,20 @@
             border-left: 5px solid #007bff;
         }
 
+        /* --- Controls Layout --- */
+        .controls-flex {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         .controls-row {
             display: flex;
+            flex-direction: row;
             gap: 20px;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 15px;
+            margin-bottom: 0;
         }
 
         .control-group {
@@ -109,6 +117,7 @@
             box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
         }
 
+        /* --- Sequence Display --- */
         .sequence-display {
             background: white;
             border: 2px solid #dee2e6;
@@ -128,8 +137,26 @@
             display: flex;
             align-items: flex-start;
             gap: 0px;
-            overflow-x: auto;
             width: 100%;
+            /* Removed overflow-x: auto; */
+        }
+
+        /* --- Sequence Header Controls --- */
+        .sequence-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            gap: 18px;
+            align-items: center;
+            margin-left: 20px;
         }
 
         .chunk-container {
@@ -250,7 +277,6 @@
             text-decoration-color: var(--color-str-underline);
             text-decoration-thickness: 2px;
             background-color: rgba(0, 255, 0, 0.25);
-            /* transparent bright green */
         }
 
         .codon-separator::after {
@@ -261,6 +287,7 @@
             font-size: 1.1em;
         }
 
+        /* --- Side by Side Results/STR --- */
         .side-by-side {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -271,6 +298,15 @@
             .side-by-side {
                 grid-template-columns: 1fr;
                 gap: 15px;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .control-group {
+                margin-bottom: 5px;
             }
         }
 
@@ -373,22 +409,6 @@
             font-size: 1.1em;
         }
 
-        @media (max-width: 1200px) {
-            .side-by-side {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .controls-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .control-group {
-                margin-bottom: 5px;
-            }
-        }
-
         .nav-top-btns {
             position: absolute;
             top: 18px;
@@ -440,51 +460,47 @@
         <h1>🧬 Analyseur de Séquences ADN - BIO109</h1>
 
         <div class="input-section">
-            <div class="controls-row">
-                <div class="control-group">
-                    <label for="chunking">Chunking:</label>
-                    <select id="chunking">
-                        <option value="10" selected>10 bases</option>
-                        <option value="6">6 bases</option>
-                        <option value="12">12 bases</option>
-                        <option value="15">15 bases</option>
-                    </select>
+            <div class="controls-flex">
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="chunking">Chunking:</label>
+                        <select id="chunking">
+                            <option value="10" selected>10 bases</option>
+                            <option value="6">6 bases</option>
+                            <option value="12">12 bases</option>
+                            <option value="15">15 bases</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="columns">Colonnes:</label>
+                        <select id="columns">
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="8">8</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="direction">Direction:</label>
+                        <select id="direction">
+                            <option value="5to3" selected>5' → 3'</option>
+                            <option value="3to5">3' → 5'</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label for="columns">Colonnes:</label>
-                    <select id="columns">
-                        <option value="4" selected>4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="8">8</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="direction">Direction:</label>
-                    <select id="direction">
-                        <option value="5to3" selected>5' → 3'</option>
-                        <option value="3to5">3' → 5'</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <input type="checkbox" id="lowercase" checked>
-                    <label for="lowercase">Minuscules</label>
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="genomeSize">Taille génome:</label>
+                        <input type="text" id="genomeSize" placeholder="ex: 2e6" value="4500000">
+                        <span>bp</span>
+                    </div>
+                    <button onclick="clearAll()">🗑️ Effacer</button>
                 </div>
             </div>
 
             <label for="sequence">Séquence ADN:</label>
             <textarea id="sequence"
                 placeholder="Entrez votre séquence ADN (ATGC seulement)...">taccagtaga cgcctacgaa taaccaacca accaaccggt tatgcaccag gctaaacgaa tgccacatgg caaaacgtaa tggtatccga cggctctgga gtaagcagac acacgtcact atggattggc tggcctgcgt ccgaaaattc ctgaaaaatt gccccacaca agctccttag gcgggactcc ctcaaattag</textarea>
-
-
-            <div class="controls-row">
-                <div class="control-group">
-                    <label for="genomeSize">Taille génome:</label>
-                    <input type="text" id="genomeSize" placeholder="ex: 2e6" value="2000000">
-                    <span>bp</span>
-                </div>
-                <button onclick="clearAll()">🗑️ Effacer</button>
-            </div>
         </div>
 
         <div class="mutation-panel" id="mutationPanel" style="display: none;">
@@ -518,7 +534,10 @@
         </div>
 
         <div id="sequenceDisplays"></div>
-        <div id="results"></div>
+        <div class="side-by-side">
+            <div id="results"></div>
+            <div id="strAnalysis"></div>
+        </div>
     </div>
 
     <script>
@@ -551,61 +570,68 @@
             const direction = document.getElementById('direction').value;
             const showSTR = document.getElementById('showSTR') ? document.getElementById('showSTR').checked : false;
             const showComplement = document.getElementById('showComplement') ? document.getElementById('showComplement').checked : false;
+            const lowercase = document.getElementById('lowercase') ? document.getElementById('lowercase').checked : true;
 
             let displayDiv = document.getElementById('sequenceDisplays');
 
+            // Sequence header controls
+            const headerControls = `
+            <div class="header-controls">
+                <div class="control-group">
+                    <input type="checkbox" id="lowercase" ${lowercase ? 'checked' : ''}>
+                    <label for="lowercase">Minuscules</label>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="showComplement" ${showComplement ? 'checked' : ''}>
+                    <label for="showComplement">Brin complémentaire</label>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
+                    <label for="showSTR">Afficher STR sur séquence</label>
+                </div>
+            </div>
+        `;
+
             if (mutatedSequence) {
                 displayDiv.innerHTML = `
+                <div class="side-by-side">
+                    <div>
+                        <div class="sequence-header">
+                            <div class="sequence-label">Séquence Originale</div>
+                            ${headerControls}
+                        </div>
+                        ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+                    </div>
+                    <div>
+                        <div class="sequence-label">Séquence Mutée</div>
+                        ${generateSequenceHTML(mutatedSequence, chunking, columns, direction, showSTR, false, 'mutated')}
+                    </div>
+                </div>
+                ${showComplement ? `
                     <div class="side-by-side">
                         <div>
-                            <div class="sequence-header">
-                                <div class="sequence-label">Séquence Originale</div>
-                                <div class="control-group">
-                                    <input type="checkbox" id="showComplement" ${showComplement ? 'checked' : ''}>
-                                    <label for="showComplement">Brin complémentaire</label>
-                                </div>
-                            </div>
-                            ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+                            <div class="sequence-label">Brin Complémentaire (Original)</div>
+                            ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
                         </div>
                         <div>
-                            <div class="sequence-label">Séquence Mutée</div>
-                            ${generateSequenceHTML(mutatedSequence, chunking, columns, direction, showSTR, false, 'mutated')}
+                            <div class="sequence-label">Brin Complémentaire (Muté)</div>
+                            ${generateSequenceHTML(getComplement(mutatedSequence), chunking, columns, direction, false, true)}
                         </div>
                     </div>
-                    <div class="sequence-controls">
-                        <div class="control-group">
-                            <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
-                            <label for="showSTR">Afficher STR sur séquence</label>
-                        </div>
-                    </div>
-                    ${showComplement ? `
-                        <div class="sequence-label">Brin Complémentaire (Original)</div>
-                        ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
-                        <div class="sequence-label">Brin Complémentaire (Muté)</div>
-                        ${generateSequenceHTML(getComplement(mutatedSequence), chunking, columns, direction, false, true)}
-                    ` : ''}
-                `;
+                ` : ''}
+            `;
             } else {
                 displayDiv.innerHTML = `
-                    <div class="sequence-header">
-                        <div class="sequence-label">Séquence Originale</div>
-                        <div class="control-group">
-                            <input type="checkbox" id="showComplement">
-                            <label for="showComplement">Brin complémentaire</label>
-                        </div>
-                    </div>
-                    ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
-                    <div class="sequence-controls">
-                        <div class="control-group">
-                            <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
-                            <label for="showSTR">Afficher STR sur séquence</label>
-                        </div>
-                    </div>
-                    ${showComplement ? `
-                        <div class="sequence-label">Brin Complémentaire</div>
-                        ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
-                    ` : ''}
-                `;
+                <div class="sequence-header">
+                    <div class="sequence-label">Séquence Originale</div>
+                    ${headerControls}
+                </div>
+                ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+                ${showComplement ? `
+                    <div class="sequence-label">Brin Complémentaire</div>
+                    ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
+                ` : ''}
+            `;
             }
 
             // Re-attach event listeners
@@ -615,6 +641,7 @@
         function attachSequenceEventListeners() {
             const showSTRCheckbox = document.getElementById('showSTR');
             const showComplementCheckbox = document.getElementById('showComplement');
+            const lowercaseCheckbox = document.getElementById('lowercase');
 
             if (showSTRCheckbox) {
                 showSTRCheckbox.addEventListener('change', function () {
@@ -631,12 +658,27 @@
                     }
                 });
             }
+
+            if (lowercaseCheckbox) {
+                lowercaseCheckbox.addEventListener('change', function () {
+                    if (originalSequence) {
+                        displaySequences();
+                        // Update original base display if mutation position is set
+                        const pos = parseInt(document.getElementById('mutationPos').value) - 1;
+                        if (pos >= 0 && pos < originalSequence.length) {
+                            const base = originalSequence[pos];
+                            document.getElementById('originalBase').value = this.checked ? base.toLowerCase() : base.toUpperCase();
+                        }
+                    }
+                });
+            }
         }
 
         function generateSequenceHTML(sequence, chunking, columns, direction, detectSTR, isComplement, extraClass = '') {
             if (!sequence) return '';
 
-            const lowercase = document.getElementById('lowercase').checked;
+            const lowercaseBox = document.getElementById('lowercase');
+            const lowercase = lowercaseBox ? lowercaseBox.checked : true;
             const displaySeq = lowercase ? sequence.toLowerCase() : sequence.toUpperCase();
             const processedSeq = direction === '3to5' ? displaySeq.split('').reverse().join('') : displaySeq;
 
@@ -874,7 +916,7 @@
 
         function analyzeResults() {
             const sequence = originalSequence;
-            const genomeSizeInput = document.getElementById('genomeSize').value.replace(/\s+/g, ''); // Remove spaces
+            const genomeSizeInput = document.getElementById('genomeSize').value.replace(/\s+/g, '');
             const genomeSize = parseFloat(genomeSizeInput) || 1000000;
 
             let resultsHTML = '<div class="results-panel"><h3>🔬 Analyses et Résultats</h3>';
@@ -968,26 +1010,28 @@
             resultsHTML += '</div>';
 
             // STR analysis - always show if detected, STR detection is enabled by default
+            let strHTML = '';
             if (detectedSTRs.length > 0) {
-                resultsHTML += '<div class="str-panel"><h4>🧬 Analyse des STR (Microsatellites)</h4>';
+                strHTML += '<div class="str-panel"><h4>🧬 Analyse des STR (Microsatellites)</h4>';
 
                 // Find longest STR
                 let longestSTR = detectedSTRs.reduce((prev, current) =>
                     (prev.length > current.length) ? prev : current
                 );
 
-                resultsHTML += `<div><strong>STR détectés:</strong> ${detectedSTRs.length} microsatellite(s)</div><br>`;
+                strHTML += `<div><strong>STR détectés:</strong> ${detectedSTRs.length} microsatellite(s)</div><br>`;
 
                 detectedSTRs.forEach(str => {
                     const isLongest = str === longestSTR && detectedSTRs.length > 1;
-                    resultsHTML += `<div>• Position ${str.start + 1}-${str.end + 1}: <strong>(${str.motif})₊${str.repeats}</strong> → ${str.motif.repeat(str.repeats)} (${str.length} bp)${isLongest ? ' ⭐ PLUS LONG' : ''}</div>`;
+                    strHTML += `<div>• Position ${str.start + 1}-${str.end + 1}: <strong>(${str.motif})₊${str.repeats}</strong> → ${str.motif.repeat(str.repeats)} (${str.length} bp)${isLongest ? ' ⭐ PLUS LONG' : ''}</div>`;
                 });
 
-                resultsHTML += `<br><div style="color: #666;"><strong>Impact PCR:</strong> Fragments variables selon individu (${detectedSTRs.map(s => s.length + 'bp').join(', ')})</div>`;
-                resultsHTML += '</div>';
+                strHTML += `<br><div style="color: #666;"><strong>Impact PCR:</strong> Fragments variables selon individu (${detectedSTRs.map(s => s.length + 'bp').join(', ')})</div>`;
+                strHTML += '</div>';
             }
 
             document.getElementById('results').innerHTML = resultsHTML;
+            document.getElementById('strAnalysis').innerHTML = strHTML;
         }
 
         function getStopCodon(sequence, pos) {
@@ -1047,46 +1091,29 @@
         document.getElementById('mutationPos').addEventListener('input', function () {
             const pos = parseInt(this.value) - 1;
             if (pos >= 0 && pos < originalSequence.length) {
-                const lowercase = document.getElementById('lowercase').checked;
+                // Defensive: check if lowercase exists
+                const lowercaseBox = document.getElementById('lowercase');
+                const lowercase = lowercaseBox ? lowercaseBox.checked : false;
                 const base = originalSequence[pos];
                 document.getElementById('originalBase').value = lowercase ? base.toLowerCase() : base.toUpperCase();
             } else {
                 document.getElementById('originalBase').value = '';
             }
         });
-
-        // Re-analyze when settings change
         document.getElementById('chunking').addEventListener('change', function () {
             if (originalSequence) displaySequences();
         });
-
         document.getElementById('columns').addEventListener('change', function () {
             if (originalSequence) displaySequences();
         });
-
         document.getElementById('direction').addEventListener('change', function () {
             if (originalSequence) displaySequences();
         });
-
-        document.getElementById('lowercase').addEventListener('change', function () {
-            if (originalSequence) {
-                displaySequences();
-                // Update original base display if mutation position is set
-                const pos = parseInt(document.getElementById('mutationPos').value) - 1;
-                if (pos >= 0 && pos < originalSequence.length) {
-                    const base = originalSequence[pos];
-                    document.getElementById('originalBase').value = this.checked ? base.toLowerCase() : base.toUpperCase();
-                }
-            }
-        });
-
         document.getElementById('genomeSize').addEventListener('input', function () {
             if (originalSequence) {
                 analyzeResults();
             }
         });
-
-        // Auto-analyze on sequence change
         document.getElementById('sequence').addEventListener('input', function () {
             if (this.value.trim()) {
                 analyzeSequence();
