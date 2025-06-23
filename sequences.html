@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 Analyseur de Séquences ADN - BIO109</title>
+    <style>
+        :root {
+            --color-atg-start: #28a745;
+            --color-stop-codon: #dc3545;
+            --color-atg-secondary: #ffc107;
+            --color-stop-secondary: #fd7e14;
+            --color-invalid: #e74c3c;
+            --color-mutation: #e91e63;
+            --color-str-underline: #9c27b0;
+            --color-complement: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #007bff;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"] {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: white;
+            min-height: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .sequence-display {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .sequence-row {
+            margin-bottom: 15px;
+        }
+
+        .chunks-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 0px;
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .chunk-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .chunk-container:last-child {
+            margin-right: 0;
+        }
+
+        .chunk-positions {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.8em;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 2px;
+            min-height: 15px;
+        }
+
+        .pos-start {
+            text-align: left;
+            min-width: 30px;
+        }
+
+        .pos-end {
+            text-align: right;
+            min-width: 30px;
+        }
+
+        .chunk-content {
+            display: flex;
+            letter-spacing: 1px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .direction-label-left,
+        .direction-label-right {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            min-width: 30px;
+            justify-content: center;
+        }
+
+        .direction-label-invisible {
+            font-weight: bold;
+            color: transparent;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            min-width: 30px;
+            justify-content: center;
+        }
+
+        .char {
+            display: inline-block;
+            width: 1.2em;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 3px;
+            padding: 1px 0;
+            position: relative;
+        }
+
+        .char.codon-separator::after {
+            content: '|';
+            color: #007bff;
+            font-weight: bold;
+            margin-left: 3px;
+            font-size: 1.1em;
+            position: absolute;
+            right: -8px;
+            top: 0;
+        }
+
+        .char.atg-start {
+            background-color: var(--color-atg-start);
+            color: white;
+        }
+
+        .char.stop-codon {
+            background-color: var(--color-stop-codon);
+            color: white;
+        }
+
+        .char.atg-secondary {
+            background-color: var(--color-atg-secondary);
+        }
+
+        .char.stop-secondary {
+            background-color: var(--color-stop-secondary);
+        }
+
+        .char.invalid {
+            background-color: var(--color-invalid);
+            color: white;
+        }
+
+        .char.mutation {
+            background-color: var(--color-mutation);
+            color: white;
+        }
+
+        .char.str {
+            text-decoration: underline;
+            text-decoration-color: var(--color-str-underline);
+            text-decoration-thickness: 2px;
+        }
+
+        .codon-separator::after {
+            content: '|';
+            color: #007bff;
+            font-weight: bold;
+            margin: 0 3px;
+            font-size: 1.1em;
+        }
+
+        .side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .side-by-side {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        .results-panel {
+            background: linear-gradient(135deg, #e7f3ff, #cce7ff);
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .results-panel h3 {
+            color: #007bff;
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .result-group {
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+            padding-left: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+
+        .result-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            color: #007bff;
+            font-family: 'Courier New', monospace;
+            margin-left: 10px;
+            font-size: 0.95em;
+        }
+
+        .result-explanation {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 20px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .str-panel {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border: 2px solid var(--color-str-underline);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .str-panel h4 {
+            color: var(--color-str-underline);
+            margin-top: 0;
+        }
+
+        .mutation-panel {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+            border: 2px solid var(--color-mutation);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .mutation-panel h4 {
+            color: var(--color-mutation);
+            margin-top: 0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            margin: 10px 0;
+        }
+
+        .sequence-label {
+            font-weight: bold;
+            color: #495057;
+            margin: 10px 0 5px 0;
+        }
+
+        .direction-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .direction-label {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 1200px) {
+            .side-by-side {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .control-group {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧬 Analyseur de Séquences ADN - BIO109</h1>
+
+        <div class="input-section">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="chunking">Chunking:</label>
+                    <select id="chunking">
+                        <option value="10" selected>10 bases</option>
+                        <option value="6">6 bases</option>
+                        <option value="12">12 bases</option>
+                        <option value="15">15 bases</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="columns">Colonnes:</label>
+                    <select id="columns">
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="direction">Direction:</label>
+                    <select id="direction">
+                        <option value="5to3" selected>5' → 3'</option>
+                        <option value="3to5">3' → 5'</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <input type="checkbox" id="lowercase" checked>
+                    <label for="lowercase">Minuscules</label>
+                </div>
+            </div>
+
+            <label for="sequence">Séquence ADN:</label>
+            <textarea id="sequence"
+                placeholder="Entrez votre séquence ADN (ATGC seulement)...">taccagtaga cgcctacgaa taaccaacca accaaccggt tatgcaccag gctaaacgaa tgccacatgg caaaacgtaa tggtatccga cggctctgga gtaagcagac acacgtcact atggattggc tggcctgcgt ccgaaaattc ctgaaaaatt gccccacaca agctccttag gcgggactcc ctcaaattag</textarea>
+
+
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="genomeSize">Taille génome:</label>
+                    <input type="text" id="genomeSize" placeholder="ex: 2e6" value="2000000">
+                    <span>bp</span>
+                </div>
+                <button onclick="clearAll()">🗑️ Effacer</button>
+            </div>
+        </div>
+
+        <div class="mutation-panel" id="mutationPanel" style="display: none;">
+            <h4>🧬 Mutation</h4>
+            <div class="mutation-inputs">
+                <div class="control-group">
+                    <label for="mutationPos">Position:</label>
+                    <input type="number" id="mutationPos" min="1" placeholder="1">
+                </div>
+                <div class="control-group">
+                    <label for="originalBase">Base actuelle:</label>
+                    <input type="text" id="originalBase" readonly style="width: 60px;">
+                </div>
+                <div class="control-group">
+                    <label for="newBase">→ Nouvelle base:</label>
+                    <select id="newBase">
+                        <option value="">Choisir</option>
+                        <option value="A">A</option>
+                        <option value="T">T</option>
+                        <option value="G">G</option>
+                        <option value="C">C</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mutation-buttons">
+                <button onclick="applyMutation()">Appliquer mutation</button>
+                <button onclick="clearMutation()">Annuler mutation</button>
+            </div>
+        </div>
+
+        <div id="sequenceDisplays"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let originalSequence = '';
+        let mutatedSequence = '';
+        let mutationPosition = -1;
+        let detectedSTRs = [];
+
+        function analyzeSequence() {
+            const rawSequence = document.getElementById('sequence').value.trim();
+            // Clean input: lowercase and remove spaces
+            const sequence = rawSequence.toLowerCase().replace(/\s+/g, '');
+            originalSequence = sequence;
+            mutatedSequence = '';
+            mutationPosition = -1;
+
+            if (!sequence) {
+                alert('Veuillez entrer une séquence ADN');
+                return;
+            }
+
+            displaySequences();
+            analyzeResults();
+            showMutationPanel();
+        }
+
+        function displaySequences() {
+            const chunking = parseInt(document.getElementById('chunking').value);
+            const columns = parseInt(document.getElementById('columns').value);
+            const direction = document.getElementById('direction').value;
+            const showSTR = document.getElementById('showSTR') ? document.getElementById('showSTR').checked : false;
+            const showComplement = document.getElementById('showComplement') ? document.getElementById('showComplement').checked : false;
+
+            let displayDiv = document.getElementById('sequenceDisplays');
+
+            if (mutatedSequence) {
+                displayDiv.innerHTML = `
+                    <div class="side-by-side">
+                        <div>
+                            <div class="sequence-header">
+                                <div class="sequence-label">Séquence Originale</div>
+                                <div class="control-group">
+                                    <input type="checkbox" id="showComplement" ${showComplement ? 'checked' : ''}>
+                                    <label for="showComplement">Brin complémentaire</label>
+                                </div>
+                            </div>
+                            ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+                        </div>
+                        <div>
+                            <div class="sequence-label">Séquence Mutée</div>
+                            ${generateSequenceHTML(mutatedSequence, chunking, columns, direction, showSTR, false, 'mutated')}
+                        </div>
+                    </div>
+                    <div class="sequence-controls">
+                        <div class="control-group">
+                            <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
+                            <label for="showSTR">Afficher STR sur séquence</label>
+                        </div>
+                    </div>
+                    ${showComplement ? `
+                        <div class="sequence-label">Brin Complémentaire (Original)</div>
+                        ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
+                        <div class="sequence-label">Brin Complémentaire (Muté)</div>
+                        ${generateSequenceHTML(getComplement(mutatedSequence), chunking, columns, direction, false, true)}
+                    ` : ''}
+                `;
+            } else {
+                displayDiv.innerHTML = `
+                    <div class="sequence-header">
+                        <div class="sequence-label">Séquence Originale</div>
+                        <div class="control-group">
+                            <input type="checkbox" id="showComplement">
+                            <label for="showComplement">Brin complémentaire</label>
+                        </div>
+                    </div>
+                    ${generateSequenceHTML(originalSequence, chunking, columns, direction, showSTR, false)}
+                    <div class="sequence-controls">
+                        <div class="control-group">
+                            <input type="checkbox" id="showSTR" ${showSTR ? 'checked' : ''}>
+                            <label for="showSTR">Afficher STR sur séquence</label>
+                        </div>
+                    </div>
+                    ${showComplement ? `
+                        <div class="sequence-label">Brin Complémentaire</div>
+                        ${generateSequenceHTML(getComplement(originalSequence), chunking, columns, direction, false, true)}
+                    ` : ''}
+                `;
+            }
+
+            // Re-attach event listeners
+            attachSequenceEventListeners();
+        }
+
+        function attachSequenceEventListeners() {
+            const showSTRCheckbox = document.getElementById('showSTR');
+            const showComplementCheckbox = document.getElementById('showComplement');
+
+            if (showSTRCheckbox) {
+                showSTRCheckbox.addEventListener('change', function () {
+                    if (originalSequence) {
+                        displaySequences();
+                    }
+                });
+            }
+
+            if (showComplementCheckbox) {
+                showComplementCheckbox.addEventListener('change', function () {
+                    if (originalSequence) {
+                        displaySequences();
+                    }
+                });
+            }
+        }
+
+        function generateSequenceHTML(sequence, chunking, columns, direction, detectSTR, isComplement, extraClass = '') {
+            if (!sequence) return '';
+
+            const lowercase = document.getElementById('lowercase').checked;
+            const displaySeq = lowercase ? sequence.toLowerCase() : sequence.toUpperCase();
+            const processedSeq = direction === '3to5' ? displaySeq.split('').reverse().join('') : displaySeq;
+
+            // Create chunks
+            const chunks = [];
+            for (let i = 0; i < processedSeq.length; i += chunking) {
+                chunks.push(processedSeq.slice(i, i + chunking));
+            }
+
+            // Find ATG and stops for highlighting (always use uppercase for logic)
+            const upperSeq = sequence.toUpperCase();
+            const atgPos = findATGPosition(upperSeq);
+            const stopPos = findStopPosition(upperSeq, atgPos);
+            const allATGs = findAllATGs(upperSeq);
+            const allStops = findAllStops(upperSeq);
+
+            // Detect STRs by default (for analysis, regardless of display)
+            if (!isComplement) {
+                detectedSTRs = detectSTRSequences(upperSeq);
+            }
+
+            let html = `<div class="sequence-display ${extraClass}">`;
+
+            // Create rows of chunks
+            const rows = [];
+            for (let i = 0; i < chunks.length; i += columns) {
+                rows.push(chunks.slice(i, i + columns));
+            }
+
+            rows.forEach((row, rowIndex) => {
+                html += '<div class="sequence-row">';
+
+                // Create flex container for this row
+                html += '<div class="chunks-container">';
+
+                // Add 5' label (visible on first row, invisible on others but taking space)
+                const leftLabel = isComplement ?
+                    (direction === '5to3' ? "3'" : "5'") :
+                    (direction === '5to3' ? "5'" : "3'");
+                const leftClass = rowIndex === 0 ? "direction-label-left" : "direction-label-invisible";
+                html += `<div class="${leftClass}">${leftLabel}</div>`;
+
+                // Process each chunk in this row
+                row.forEach((chunk, chunkIndex) => {
+                    const globalChunkIndex = rowIndex * columns + chunkIndex;
+                    const startPos = direction === '5to3' ?
+                        globalChunkIndex * chunking + 1 :
+                        sequence.length - (globalChunkIndex + 1) * chunking + 1;
+                    const endPos = direction === '5to3' ?
+                        Math.min(globalChunkIndex * chunking + chunking, sequence.length) :
+                        Math.max(sequence.length - globalChunkIndex * chunking, 1);
+
+                    html += '<div class="chunk-container">';
+
+                    // Position numbers above chunk
+                    html += '<div class="chunk-positions">';
+                    html += `<span class="pos-start">${startPos}</span>`;
+                    if (chunk.length >= chunking) {
+                        html += `<span class="pos-end">${endPos}</span>`;
+                    }
+                    html += '</div>';
+
+                    // Chunk content
+                    html += '<div class="chunk-content">';
+                    html += generateChunkHTML(chunk, globalChunkIndex, chunking, upperSeq, atgPos, stopPos, allATGs, allStops, direction, isComplement, detectSTR);
+                    html += '</div>';
+
+                    html += '</div>';
+                });
+
+                // Add 3' label (visible on last row, invisible on others but taking space)
+                const rightLabel = isComplement ?
+                    (direction === '5to3' ? "5'" : "3'") :
+                    (direction === '5to3' ? "3'" : "5'");
+                const rightClass = rowIndex === rows.length - 1 ? "direction-label-right" : "direction-label-invisible";
+                html += `<div class="${rightClass}">${rightLabel}</div>`;
+
+                html += '</div>'; // chunks-container
+                html += '</div>'; // sequence-row
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function generateChunkHTML(chunk, chunkIndex, chunking, originalSeq, atgPos, stopPos, allATGs, allStops, direction, isComplement, showSTRHighlight = true) {
+            let html = '';
+
+            for (let i = 0; i < chunk.length; i++) {
+                const char = chunk[i];
+                const globalPos = direction === '5to3' ?
+                    chunkIndex * chunking + i :
+                    originalSeq.length - (chunkIndex * chunking + i) - 1;
+
+                let classes = ['char'];
+
+                if (!isComplement) {
+                    // Invalid characters (check uppercase version)
+                    if (!'ATGC'.includes(char.toUpperCase())) {
+                        classes.push('invalid');
+                    }
+
+                    // Mutation highlighting
+                    if (mutationPosition !== -1 && globalPos === mutationPosition) {
+                        classes.push('mutation');
+                    }
+
+                    // ATG highlighting (highlight all 3 bases of ATG)
+                    if (globalPos >= atgPos && globalPos < atgPos + 3) {
+                        classes.push('atg-start');
+                    } else if (globalPos >= stopPos && globalPos < stopPos + 3) {
+                        classes.push('stop-codon');
+                    } else {
+                        // Check for other ATGs (highlight all 3 bases)
+                        for (let pos of allATGs) {
+                            if (globalPos >= pos && globalPos < pos + 3) {
+                                classes.push('atg-secondary');
+                                break;
+                            }
+                        }
+                        // Check for other stops (highlight all 3 bases)
+                        for (let pos of allStops) {
+                            if (globalPos >= pos && globalPos < pos + 3) {
+                                classes.push('stop-secondary');
+                                break;
+                            }
+                        }
+                    }
+
+                    // STR highlighting (only if showSTRHighlight is true)
+                    if (showSTRHighlight) {
+                        for (let str of detectedSTRs) {
+                            if (globalPos >= str.start && globalPos <= str.end) {
+                                classes.push('str');
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Codon separators (only after ATG, every 3 bases)
+                if (!isComplement && atgPos !== -1 && globalPos >= atgPos && (globalPos - atgPos) % 3 === 2) {
+                    classes.push('codon-separator');
+                }
+
+                html += `<span class="${classes.join(' ')}">${char}</span>`;
+            }
+
+            return html;
+        }
+
+        function getComplement(sequence) {
+            const complementMap = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' };
+            return sequence.split('').map(base => complementMap[base] || base).join('');
+        }
+
+        function findATGPosition(sequence) {
+            return sequence.indexOf('ATG');
+        }
+
+        function findStopPosition(sequence, atgPos) {
+            if (atgPos === -1) return -1;
+
+            for (let i = atgPos + 3; i <= sequence.length - 3; i += 3) {
+                const codon = sequence.slice(i, i + 3);
+                if (['TAA', 'TAG', 'TGA'].includes(codon)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        function findAllATGs(sequence) {
+            const positions = [];
+            for (let i = 0; i <= sequence.length - 3; i++) {
+                if (sequence.slice(i, i + 3) === 'ATG') {
+                    positions.push(i);
+                }
+            }
+            return positions.slice(1); // Exclude first ATG
+        }
+
+        function findAllStops(sequence) {
+            const positions = [];
+            for (let i = 0; i <= sequence.length - 3; i++) {
+                const codon = sequence.slice(i, i + 3);
+                if (['TAA', 'TAG', 'TGA'].includes(codon)) {
+                    positions.push(i);
+                }
+            }
+            return positions.slice(1); // Exclude first stop
+        }
+
+        function detectSTRSequences(sequence) {
+            const strs = [];
+            const upperSeq = sequence.toUpperCase();
+
+            // Check for dinucleotide, trinucleotide, and tetranucleotide repeats
+            for (let motifLen = 2; motifLen <= 4; motifLen++) {
+                for (let i = 0; i <= upperSeq.length - motifLen * 3; i++) {
+                    const motif = upperSeq.slice(i, i + motifLen);
+                    let repeats = 1;
+                    let pos = i + motifLen;
+
+                    // Count consecutive repeats
+                    while (pos + motifLen <= upperSeq.length && upperSeq.slice(pos, pos + motifLen) === motif) {
+                        repeats++;
+                        pos += motifLen;
+                    }
+
+                    // Consider as STR if at least 3 repeats
+                    if (repeats >= 3) {
+                        strs.push({
+                            start: i,
+                            end: pos - 1,
+                            motif: motif,
+                            repeats: repeats,
+                            length: repeats * motifLen,
+                            sequence: motif.repeat(repeats)
+                        });
+                        i = pos - 1; // Skip analyzed region
+                    }
+                }
+            }
+
+            // Sort by position
+            return strs.sort((a, b) => a.start - b.start);
+        }
+
+        function formatScientific(number) {
+            const exp = Math.floor(Math.log10(number));
+            const mantissa = (number / Math.pow(10, exp)).toFixed(1);
+            return `${mantissa}×10^${exp}`;
+        }
+
+        function analyzeResults() {
+            const sequence = originalSequence;
+            const genomeSizeInput = document.getElementById('genomeSize').value.replace(/\s+/g, ''); // Remove spaces
+            const genomeSize = parseFloat(genomeSizeInput) || 1000000;
+
+            let resultsHTML = '<div class="results-panel"><h3>🔬 Analyses et Résultats</h3>';
+
+            // Protein analysis
+            const atgPos = findATGPosition(sequence.toUpperCase());
+            const stopPos = findStopPosition(sequence.toUpperCase(), atgPos);
+
+            resultsHTML += '<div class="result-group">';
+            if (atgPos !== -1 && stopPos !== -1) {
+                const proteinLength = (stopPos - atgPos) / 3;
+                resultsHTML += `<div class="result-title">Protéine Originale:</div>`;
+                resultsHTML += `<div class="result-value">${proteinLength} acides aminés (ATG pos.${atgPos + 1} → ${getStopCodon(sequence.toUpperCase(), stopPos)} pos.${stopPos + 1})</div>`;
+            } else if (atgPos !== -1) {
+                resultsHTML += `<div class="result-title">Séquence:</div>`;
+                resultsHTML += `<div class="result-value">ATG trouvé à position ${atgPos + 1}, mais pas de codon stop en phase</div>`;
+            } else {
+                resultsHTML += `<div class="result-title">Séquence:</div>`;
+                resultsHTML += `<div class="result-value">Aucun ATG trouvé dans la séquence</div>`;
+            }
+            resultsHTML += '</div>';
+
+            // Mutation analysis
+            if (mutatedSequence) {
+                const mutAtgPos = findATGPosition(mutatedSequence.toUpperCase());
+                const mutStopPos = findStopPosition(mutatedSequence.toUpperCase(), mutAtgPos);
+
+                resultsHTML += '<div class="result-group">';
+                resultsHTML += `<div class="result-title">Protéine Mutée:</div>`;
+
+                if (mutAtgPos !== -1 && mutStopPos !== -1) {
+                    const mutProteinLength = (mutStopPos - mutAtgPos) / 3;
+                    const originalLength = atgPos !== -1 && stopPos !== -1 ? (stopPos - atgPos) / 3 : 0;
+
+                    resultsHTML += `<div class="result-value">${mutProteinLength} acides aminés (ATG pos.${mutAtgPos + 1} → ${getStopCodon(mutatedSequence.toUpperCase(), mutStopPos)} pos.${mutStopPos + 1})`;
+
+                    if (originalLength > 0) {
+                        if (mutProteinLength === originalLength) {
+                            resultsHTML += ` [MÊME LONGUEUR]`;
+                        } else if (mutProteinLength < originalLength) {
+                            resultsHTML += ` [RACCOURCIE de ${originalLength - mutProteinLength} aa]`;
+                        } else {
+                            resultsHTML += ` [ALLONGÉE de ${mutProteinLength - originalLength} aa]`;
+                        }
+                    }
+                    resultsHTML += `</div>`;
+                } else {
+                    resultsHTML += `<div class="result-value">Mutation empêche la traduction (pas de protéine fonctionnelle)</div>`;
+                }
+                resultsHTML += '</div>';
+            }
+
+            // PCR calculations
+            resultsHTML += '<div class="result-group">';
+            const minPrimerLength = Math.ceil(Math.log(genomeSize) / Math.log(4));
+            const logValue = (Math.log(genomeSize) / Math.log(4)).toFixed(2);
+            const genomeFormatted = formatScientific(genomeSize);
+
+            resultsHTML += `<div class="result-title">Calcul Amorce:</div>`;
+            resultsHTML += `<div class="result-value">n ≥ log₄(${genomeFormatted}) = ${logValue}</div>`;
+            resultsHTML += `<div class="result-explanation">Taille minimale amorce: ${minPrimerLength} bases</div>`;
+            resultsHTML += `<div class="result-explanation">Explication: 4^${minPrimerLength} = ${Math.pow(4, minPrimerLength).toLocaleString()} > ${genomeSize.toLocaleString()} (couverture génome)</div>`;
+            resultsHTML += '</div>';
+
+            // Generate primers
+            if (sequence.length >= minPrimerLength) {
+                resultsHTML += '<div class="result-group">';
+                const forwardPrimer = sequence.slice(0, minPrimerLength);
+                resultsHTML += `<div class="result-title">Amorce Forward:</div>`;
+                resultsHTML += `<div class="result-value">5'-${forwardPrimer}-3' (${minPrimerLength} bases, début séquence)</div>`;
+                resultsHTML += '</div>';
+
+                resultsHTML += '<div class="result-group">';
+                const endSequence = sequence.slice(-minPrimerLength);
+                const complement = getComplement(endSequence.toUpperCase());
+                const reversePrimer = complement.split('').reverse().join('').toLowerCase();
+
+                resultsHTML += `<div class="result-title">Amorce Reverse:</div>`;
+                resultsHTML += `<div class="result-value">5'-${reversePrimer}-3'</div>`;
+                resultsHTML += `<div class="result-explanation">Fin séquence: ...${endSequence}</div>`;
+                resultsHTML += `<div class="result-explanation">Complément: ...${complement.toLowerCase()}</div>`;
+                resultsHTML += `<div class="result-explanation">Reverse final: 5'-${reversePrimer}-3'</div>`;
+                resultsHTML += '</div>';
+
+                resultsHTML += '<div class="result-group">';
+                resultsHTML += `<div class="result-title">Produit PCR:</div>`;
+                resultsHTML += `<div class="result-value">${sequence.length} bp attendu</div>`;
+                resultsHTML += '</div>';
+            }
+
+            resultsHTML += '</div>';
+
+            // STR analysis - always show if detected, STR detection is enabled by default
+            if (detectedSTRs.length > 0) {
+                resultsHTML += '<div class="str-panel"><h4>🧬 Analyse des STR (Microsatellites)</h4>';
+
+                // Find longest STR
+                let longestSTR = detectedSTRs.reduce((prev, current) =>
+                    (prev.length > current.length) ? prev : current
+                );
+
+                resultsHTML += `<div><strong>STR détectés:</strong> ${detectedSTRs.length} microsatellite(s)</div><br>`;
+
+                detectedSTRs.forEach(str => {
+                    const isLongest = str === longestSTR && detectedSTRs.length > 1;
+                    resultsHTML += `<div>• Position ${str.start + 1}-${str.end + 1}: <strong>(${str.motif})₊${str.repeats}</strong> → ${str.motif.repeat(str.repeats)} (${str.length} bp)${isLongest ? ' ⭐ PLUS LONG' : ''}</div>`;
+                });
+
+                resultsHTML += `<br><div style="color: #666;"><strong>Impact PCR:</strong> Fragments variables selon individu (${detectedSTRs.map(s => s.length + 'bp').join(', ')})</div>`;
+                resultsHTML += '</div>';
+            }
+
+            document.getElementById('results').innerHTML = resultsHTML;
+        }
+
+        function getStopCodon(sequence, pos) {
+            return sequence.slice(pos, pos + 3);
+        }
+
+        function showMutationPanel() {
+            document.getElementById('mutationPanel').style.display = 'block';
+        }
+
+        function applyMutation() {
+            const pos = parseInt(document.getElementById('mutationPos').value) - 1; // Convert to 0-based
+            let newBase = document.getElementById('newBase').value;
+
+            if (pos < 0 || pos >= originalSequence.length) {
+                alert('Position invalide');
+                return;
+            }
+
+            if (!newBase) {
+                alert('Veuillez choisir une nouvelle base');
+                return;
+            }
+
+            // Convert to same case as original sequence
+            const lowercase = document.getElementById('lowercase').checked;
+            newBase = lowercase ? newBase.toLowerCase() : newBase.toUpperCase();
+
+            mutationPosition = pos;
+            mutatedSequence = originalSequence.split('');
+            mutatedSequence[pos] = newBase;
+            mutatedSequence = mutatedSequence.join('');
+
+            displaySequences();
+            analyzeResults();
+        }
+
+        function clearMutation() {
+            mutatedSequence = '';
+            mutationPosition = -1;
+            document.getElementById('mutationPos').value = '';
+            document.getElementById('originalBase').value = '';
+            document.getElementById('newBase').value = '';
+            displaySequences();
+            analyzeResults();
+        }
+
+        function clearAll() {
+            document.getElementById('sequence').value = '';
+            document.getElementById('sequenceDisplays').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('mutationPanel').style.display = 'none';
+            clearMutation();
+        }
+
+        // Update original base when position changes
+        document.getElementById('mutationPos').addEventListener('input', function () {
+            const pos = parseInt(this.value) - 1;
+            if (pos >= 0 && pos < originalSequence.length) {
+                const lowercase = document.getElementById('lowercase').checked;
+                const base = originalSequence[pos];
+                document.getElementById('originalBase').value = lowercase ? base.toLowerCase() : base.toUpperCase();
+            } else {
+                document.getElementById('originalBase').value = '';
+            }
+        });
+
+        // Re-analyze when settings change
+        document.getElementById('chunking').addEventListener('change', function () {
+            if (originalSequence) displaySequences();
+        });
+
+        document.getElementById('columns').addEventListener('change', function () {
+            if (originalSequence) displaySequences();
+        });
+
+        document.getElementById('direction').addEventListener('change', function () {
+            if (originalSequence) displaySequences();
+        });
+
+        document.getElementById('lowercase').addEventListener('change', function () {
+            if (originalSequence) {
+                displaySequences();
+                // Update original base display if mutation position is set
+                const pos = parseInt(document.getElementById('mutationPos').value) - 1;
+                if (pos >= 0 && pos < originalSequence.length) {
+                    const base = originalSequence[pos];
+                    document.getElementById('originalBase').value = this.checked ? base.toLowerCase() : base.toUpperCase();
+                }
+            }
+        });
+
+        document.getElementById('genomeSize').addEventListener('input', function () {
+            if (originalSequence) {
+                analyzeResults();
+            }
+        });
+
+        // Auto-analyze on sequence change
+        document.getElementById('sequence').addEventListener('input', function () {
+            if (this.value.trim()) {
+                analyzeSequence();
+            }
+        });
+
+        // Initial analysis with example
+        setTimeout(() => analyzeSequence(), 100);
+    </script>
+</body>
+
+</html>
