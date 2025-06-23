@@ -249,6 +249,8 @@
             text-decoration: underline;
             text-decoration-color: var(--color-str-underline);
             text-decoration-thickness: 2px;
+            background-color: rgba(0, 255, 0, 0.25);
+            /* transparent bright green */
         }
 
         .codon-separator::after {
@@ -412,6 +414,19 @@
             background: linear-gradient(135deg, #0056b3, #007bff);
             transform: translateY(-2px) scale(1.03);
         }
+
+        .mutation-flex {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mutation-inputs,
+        .mutation-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+        }
     </style>
 </head>
 
@@ -474,29 +489,31 @@
 
         <div class="mutation-panel" id="mutationPanel" style="display: none;">
             <h4>🧬 Mutation</h4>
-            <div class="mutation-inputs">
-                <div class="control-group">
-                    <label for="mutationPos">Position:</label>
-                    <input type="number" id="mutationPos" min="1" placeholder="1">
+            <div class="mutation-flex">
+                <div class="mutation-inputs">
+                    <div class="control-group">
+                        <label for="mutationPos">Position:</label>
+                        <input type="number" id="mutationPos" min="1" placeholder="1">
+                    </div>
+                    <div class="control-group">
+                        <label for="originalBase">Base actuelle:</label>
+                        <input type="text" id="originalBase" readonly style="width: 60px;">
+                    </div>
+                    <div class="control-group">
+                        <label for="newBase">→ Nouvelle base:</label>
+                        <select id="newBase">
+                            <option value="">Choisir</option>
+                            <option value="A">A</option>
+                            <option value="T">T</option>
+                            <option value="G">G</option>
+                            <option value="C">C</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label for="originalBase">Base actuelle:</label>
-                    <input type="text" id="originalBase" readonly style="width: 60px;">
+                <div class="mutation-buttons">
+                    <button onclick="applyMutation()">Appliquer mutation</button>
+                    <button onclick="clearMutation()">Annuler mutation</button>
                 </div>
-                <div class="control-group">
-                    <label for="newBase">→ Nouvelle base:</label>
-                    <select id="newBase">
-                        <option value="">Choisir</option>
-                        <option value="A">A</option>
-                        <option value="T">T</option>
-                        <option value="G">G</option>
-                        <option value="C">C</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mutation-buttons">
-                <button onclick="applyMutation()">Appliquer mutation</button>
-                <button onclick="clearMutation()">Annuler mutation</button>
             </div>
         </div>
 
