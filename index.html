@@ -22,6 +22,7 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .diff-A {
@@ -758,11 +759,41 @@
                 /* On smaller screens, go back to a single column */
             }
         }
+
+        .nav-top-btns {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-top-btns a {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1em;
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.08);
+        }
+
+        .nav-top-btns a:hover {
+            background: linear-gradient(135deg, #0056b3, #007bff);
+            transform: translateY(-2px) scale(1.03);
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <div class="nav-top-btns">
+            <a href="index.html">🏠 Accueil</a>
+            <a href="sequences.html">DNA Sequence Analyzer</a>
+        </div>
         <header class="main-header">
             <h1>🧬 UPGMA Calculator</h1>
             <div class="top-controls">
@@ -775,9 +806,9 @@
                     <select id="masterSizeSelector" onchange="updateAllInputs(); saveState();">
                         <option value="3">3</option>
                         <option value="4">4</option>
-                        <option value="5" selected>5</option>
+                        <option value="5">5</option>
                         <option value="6">6</option>
-                        <option value="7">7</option>
+                        <option value="7" selected>7</option>
                         <option value="8">8</option>
                         <option value="9">9</option>
                         <option value="10">10</option>
@@ -2004,6 +2035,15 @@
 
         // Initialize
         loadState();
+
+        // Set default matrix size to 7 and both panels visible, empty by default
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('masterSizeSelector').value = '7';
+            document.getElementById('sequence-toggle').checked = true;
+            updateAllInputs();
+            toggleInputView();
+            clearResults();
+        });
     </script>
 
 </html>
